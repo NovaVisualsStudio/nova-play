@@ -34,10 +34,27 @@ footer{border-top:1px solid #242424;margin-top:50px;padding:30px 0 45px;color:#9
 .player-help{color:#aaa;font-size:12px;margin:9px 0 0}
 @media(max-width:520px){.player-tools{grid-template-columns:1fr}.player-tools button{width:100%}}
 
+
+.auth-modal{display:none;position:fixed;inset:0;z-index:80;background:#000e;align-items:center;justify-content:center;padding:16px}
+.auth-modal.show{display:flex}
+.auth-card{width:min(460px,100%);background:linear-gradient(145deg,#1b1b1b,#101010);border:1px solid #383838;border-radius:16px;padding:26px;box-shadow:0 24px 80px #000b;position:relative}
+.auth-brand{text-align:center;font-size:27px;font-weight:950;color:var(--red);margin-bottom:5px}.auth-brand span{color:#fff}
+.auth-sub{text-align:center;color:#aaa;font-size:13px;margin:0 0 20px}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:#090909;border:1px solid #333;border-radius:9px;padding:4px;margin-bottom:18px}
+.auth-tab{border:0;background:transparent;color:#aaa;border-radius:6px;padding:10px;font-weight:800}.auth-tab.active{background:var(--red);color:white}
+.auth-form label{display:block;font-size:13px;color:#ddd;margin:12px 0 6px}
+.auth-form input{width:100%;background:#090909;color:#fff;border:1px solid #414141;border-radius:7px;padding:12px;outline:none}
+.auth-form input:focus{border-color:var(--red);box-shadow:0 0 0 2px #e5091828}
+.auth-submit{width:100%;margin-top:18px}.auth-message{font-size:13px;min-height:22px;color:#ff858b;margin-top:12px;text-align:center}.auth-message.ok{color:#8be0a5}
+.auth-foot{text-align:center;color:#999;font-size:12px;margin:12px 0 0}.auth-close{position:absolute;top:12px;inset-inline-end:12px;background:#333;color:white;border:0;border-radius:50%;width:32px;height:32px;font-size:19px}
+.auth-link{background:none;border:0;color:#ff737c;text-decoration:underline;padding:0;cursor:pointer}
+.user-chip{display:none;color:#ddd;border:1px solid #444;border-radius:20px;padding:7px 10px;font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:680px){.auth-card{padding:22px 18px}.user-chip{max-width:90px}}
+
 </style>
 </head>
 <body>
-<header><div class="wrap nav"><a class="brand" href="#">FATI<span>PLAY</span></a><nav class="navlinks"><a href="#home" data-i="home">الرئيسية</a><a href="#movies" data-i="movies">الأفلام</a><a href="#series" data-i="series">المسلسلات</a><a href="#saved" data-i="saved">قائمتي</a></nav><div class="actions"><select class="lang" id="language" aria-label="Language"><option value="ar">العربية</option><option value="fr">Français</option><option value="en">English</option></select><button class="login" id="login" data-i="login">تسجيل الدخول</button><button class="menu" id="menu" aria-label="Menu">☰</button></div></div></header>
+<header><div class="wrap nav"><a class="brand" href="#">FATI<span>PLAY</span></a><nav class="navlinks"><a href="#home" data-i="home">الرئيسية</a><a href="#movies" data-i="movies">الأفلام</a><a href="#series" data-i="series">المسلسلات</a><a href="#saved" data-i="saved">قائمتي</a></nav><div class="actions"><select class="lang" id="language" aria-label="Language"><option value="ar">العربية</option><option value="fr">Français</option><option value="en">English</option></select><span class="user-chip" id="userChip"></span><button class="login" id="login" data-i="login">تسجيل الدخول</button><button class="menu" id="menu" aria-label="Menu">☰</button></div></div></header>
 <section class="hero" id="home"><div class="wrap"><div class="hero-content"><span class="pill" data-i="heroTag">عالمك السينمائي</span><h1 data-i="heroTitle">كل القصص التي تحبها<br>في مكان واحد.</h1><p data-i="heroText">اكتشف أفلاماً ومسلسلات من مختلف الأنواع، وتعرّف على قصص جديدة في تجربة مصممة لكل الشاشات.</p><div class="hero-actions"><button class="primary" id="explore" data-i="explore">استكشف الأعمال الآن ▶</button><button class="secondary" id="myList" data-i="myList">＋ قائمتي</button></div></div></div></section>
 <main class="wrap">
 <section class="section" id="movies"><div class="section-head"><div><h2 data-i="popular">الأكثر رواجاً</h2><div class="sub" data-i="popularSub">اختيارات تستحق المشاهدة</div></div><span class="sub" id="count"></span></div><div class="filters" id="filters"><button class="filter active" data-cat="all" data-i="all">الكل</button><button class="filter" data-cat="movie" data-i="movies">أفلام</button><button class="filter" data-cat="series" data-i="series">مسلسلات</button><button class="filter" data-cat="drama" data-i="drama">دراما</button><button class="filter" data-cat="action" data-i="action">أكشن</button><button class="filter" data-cat="documentary" data-i="documentary">وثائقي</button></div><div class="grid" id="catalog"></div><div class="empty" id="empty" data-i="empty">لا توجد نتائج مطابقة.</div></section>
@@ -51,6 +68,25 @@ footer{border-top:1px solid #242424;margin-top:50px;padding:30px 0 45px;color:#9
 <div class="player-tools"><input id="videoUrl" type="url" placeholder="https://example.com/video.mp4" inputmode="url"><button class="primary" id="loadVideo" type="button">Load video</button></div>
 <p class="player-help" id="playerHelp">Use a video file you own or a direct streaming URL you are authorized to use. Some sites block external playback.</p>
 </div><p class="meta" id="watchNote"></p></div></div></div><div class="toast" id="toast"></div>
+<div class="auth-modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authHeading">
+ <section class="auth-card">
+  <button class="auth-close" id="authClose" aria-label="Close">×</button>
+  <div class="auth-brand">FATI<span>PLAY</span></div>
+  <h2 id="authHeading" style="text-align:center;margin:0;font-size:21px" data-i="authWelcome">مرحباً بك من جديد</h2>
+  <p class="auth-sub" data-i="authSub">سجّل الدخول لمتابعة تجربتك</p>
+  <div class="auth-tabs"><button class="auth-tab active" id="signInTab" type="button" data-i="signIn">تسجيل الدخول</button><button class="auth-tab" id="signUpTab" type="button" data-i="signUp">إنشاء حساب</button></div>
+  <form class="auth-form" id="authForm">
+   <div id="nameField" hidden><label for="authName" data-i="fullName">الاسم الكامل</label><input id="authName" type="text" autocomplete="name" maxlength="70"></div>
+   <label for="authEmail" data-i="email">البريد الإلكتروني</label><input id="authEmail" type="email" autocomplete="email" required maxlength="254" placeholder="name@example.com">
+   <label for="authPassword" data-i="password">كلمة المرور</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="8" maxlength="72" placeholder="••••••••">
+   <div id="confirmField" hidden><label for="authConfirm" data-i="confirmPassword">تأكيد كلمة المرور</label><input id="authConfirm" type="password" autocomplete="new-password" minlength="8" maxlength="72"></div>
+   <button class="auth-submit primary" id="authSubmit" type="submit" data-i="signIn">تسجيل الدخول</button>
+  </form>
+  <div class="auth-message" id="authMessage" role="status" aria-live="polite"></div>
+  <p class="auth-foot" id="authFoot"><span data-i="noAccount">ليس لديك حساب؟</span> <button class="auth-link" id="switchAuth" type="button" data-i="createOne">أنشئ حساباً</button></p>
+  <p class="auth-foot" data-i="secureNote">لا تشارك كلمة المرور مع أي شخص.</p>
+ </section>
+</div>
 <script>
 const catalog=[
 {id:1,cat:'movie',genre:'action',year:2025,rating:'8.4',title:{ar:'مطاردة الظلال',fr:'La chasse aux ombres',en:'Shadow Chase'},desc:{ar:'فيلم أكشن تشويقي تجريبي. أضف وصف العمل الحقيقي وبياناته قبل النشر.',fr:'Fiche de démonstration. Ajoutez les informations officielles avant publication.',en:'Demo title. Add the official synopsis and details before publishing.'},img:'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=700&q=85'},
@@ -65,7 +101,11 @@ ar:{home:'الرئيسية',movies:'الأفلام',series:'المسلسلات',
 fr:{home:'Accueil',movies:'Films',series:'Séries',saved:'Ma liste',login:'Connexion',heroTag:'Votre univers cinéma',heroTitle:'Toutes les histoires que vous aimez<br>au même endroit.',heroText:'Découvrez des films et des séries de genres variés dans une expérience adaptée à tous vos écrans.',explore:'Explorer maintenant ▶',myList:'＋ Ma liste',popular:'Les plus populaires',popularSub:'Une sélection à découvrir',all:'Tout',drama:'Drame',action:'Action',documentary:'Documentaire',empty:'Aucun résultat.',bannerTitle:'Votre expérience FATIPLAY commence ici',bannerText:'Une interface multilingue, une bibliothèque organisée et vos favoris.',browse:'Parcourir',savedTitle:'Ma liste',savedSub:'Vos favoris enregistrés sur cet appareil',savedEmpty:'Votre liste est vide.',disclaimer:'Plateforme de démonstration. La lecture nécessite des contenus sous licence et les droits de diffusion.',watch:'▶ Ouvrir le lecteur',save:'＋ Ajouter à ma liste',savedBtn:'✓ Retirer de ma liste',watchNote:'Choisissez un fichier vidéo sur votre téléphone ou collez un lien direct autorisé.',fileLabel:'Choisir une vidéo sur votre appareil',loadVideo:'Lire le lien',playerHelp:'Utilisez un fichier qui vous appartient ou un lien que vous êtes autorisé à diffuser. Certains sites bloquent la lecture externe.',urlError:'Lien invalide. Saisissez une URL vidéo directe commençant par http ou https.',loginMsg:'Les comptes nécessitent un serveur et une base de données.',savedMsg:'Votre liste a été mise à jour.'},
 en:{home:'Home',movies:'Movies',series:'Series',saved:'My List',login:'Sign in',heroTag:'Your cinema universe',heroTitle:'All the stories you love<br>in one place.',heroText:'Discover movies and series across genres in an experience designed for every screen.',explore:'Explore titles ▶',myList:'＋ My List',popular:'Trending now',popularSub:'Hand-picked titles to discover',all:'All',drama:'Drama',action:'Action',documentary:'Documentary',empty:'No matching titles.',bannerTitle:'Your FATIPLAY experience starts here',bannerText:'A multilingual interface, organized library and your personal watchlist.',browse:'Browse library',savedTitle:'My List',savedSub:'Favorites saved on this device',savedEmpty:'Your list is empty.',disclaimer:'Demo platform. Playback requires licensed files or streaming links and appropriate distribution rights.',watch:'▶ Open player',save:'＋ Add to my list',savedBtn:'✓ Remove from my list',watchNote:'Choose a video file from your phone or enter an authorized direct video link.',fileLabel:'Choose a video file from your device',loadVideo:'Play link',playerHelp:'Use a file you own or a stream URL you are authorized to use. Some sites block external playback.',urlError:'Invalid URL. Enter a direct video URL starting with http or https.',loginMsg:'Accounts require a backend server and database.',savedMsg:'Your list has been updated.'}
 };
-let lang='ar',active='all',selected=null;const $=s=>document.querySelector(s);const t=k=>words[lang][k]||k;const saved=()=>JSON.parse(localStorage.getItem('fatiplay_saved')||'[]');const toast=m=>{const x=$('#toast');x.textContent=m;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),2300)};
+const authWords={"ar":{"signIn":"تسجيل الدخول","signUp":"إنشاء حساب","authWelcome":"مرحباً بك من جديد","authSub":"سجّل الدخول لمتابعة تجربتك","fullName":"الاسم الكامل","email":"البريد الإلكتروني","password":"كلمة المرور","confirmPassword":"تأكيد كلمة المرور","noAccount":"ليس لديك حساب؟","createOne":"أنشئ حساباً","hasAccount":"لديك حساب بالفعل؟","signInNow":"سجّل الدخول","secureNote":"لا تشارك كلمة المرور مع أي شخص.","authConfig":"يلزم ربط خدمة المصادقة الآمنة أولاً لإكمال التسجيل.","authInvalid":"يرجى إدخال بريد إلكتروني صحيح وكلمة مرور من 8 أحرف على الأقل.","authMismatch":"كلمتا المرور غير متطابقتين.","authNameRequired":"يرجى إدخال اسمك الكامل.","authSignupOk":"تم إنشاء الحساب. تحقق من بريدك الإلكتروني إذا طُلب منك ذلك.","authLoginOk":"تم تسجيل الدخول بنجاح.","authError":"تعذر إكمال العملية. تحقق من البيانات وحاول مجدداً.","logout":"تسجيل الخروج","logoutOk":"تم تسجيل الخروج."},"fr":{"signIn":"Connexion","signUp":"Créer un compte","authWelcome":"Bon retour","authSub":"Connectez-vous pour continuer","fullName":"Nom complet","email":"Adresse e-mail","password":"Mot de passe","confirmPassword":"Confirmer le mot de passe","noAccount":"Pas encore de compte ?","createOne":"Créer un compte","hasAccount":"Vous avez déjà un compte ?","signInNow":"Se connecter","secureNote":"Ne partagez jamais votre mot de passe.","authConfig":"Le service d’authentification doit être connecté avant l’inscription.","authInvalid":"Saisissez un e-mail valide et un mot de passe de 8 caractères minimum.","authMismatch":"Les mots de passe ne correspondent pas.","authNameRequired":"Veuillez saisir votre nom complet.","authSignupOk":"Compte créé. Vérifiez votre e-mail si nécessaire.","authLoginOk":"Connexion réussie.","authError":"Opération impossible. Vérifiez vos informations.","logout":"Déconnexion","logoutOk":"Vous êtes déconnecté."},"en":{"signIn":"Sign in","signUp":"Create account","authWelcome":"Welcome back","authSub":"Sign in to continue your experience","fullName":"Full name","email":"Email address","password":"Password","confirmPassword":"Confirm password","noAccount":"Don’t have an account?","createOne":"Create one","hasAccount":"Already have an account?","signInNow":"Sign in instead","secureNote":"Never share your password with anyone.","authConfig":"Connect the secure authentication service before enabling registration.","authInvalid":"Enter a valid email and a password with at least 8 characters.","authMismatch":"Passwords do not match.","authNameRequired":"Please enter your full name.","authSignupOk":"Account created. Check your email if confirmation is required.","authLoginOk":"You are signed in.","authError":"Could not complete the request. Check your details and try again.","logout":"Sign out","logoutOk":"You have signed out."}};
+let authMode='signin';
+const SUPABASE_URL='https://YOUR_PROJECT.supabase.co';
+const SUPABASE_ANON_KEY='YOUR_SUPABASE_ANON_KEY';
+let lang='ar',active='all',selected=null;const $=s=>document.querySelector(s);const t=k=>words[lang][k]||authWords[lang][k]||k;const saved=()=>JSON.parse(localStorage.getItem('fatiplay_saved')||'[]');const toast=m=>{const x=$('#toast');x.textContent=m;x.classList.add('show');setTimeout(()=>x.classList.remove('show'),2300)};
 function card(item){return '<article class="movie" data-id="'+item.id+'"><div class="poster"><img loading="lazy" src="'+item.img+'" alt="'+item.title[lang]+'"><span class="poster-tag">'+(item.cat==='movie'?t('movies'):t('series'))+'</span><span class="play">▶</span></div><h3>'+item.title[lang]+'</h3><div class="meta">'+item.year+' · ★ '+item.rating+'</div></article>'}
 function render(){let list=catalog.filter(x=>active==='all'||x.cat===active||x.genre===active);$('#catalog').innerHTML=list.map(card).join('');$('#count').textContent=list.length;$('#empty').style.display=list.length?'none':'block';let fav=catalog.filter(x=>saved().includes(x.id));$('#savedGrid').innerHTML=fav.map(card).join('');$('#savedEmpty').style.display=fav.length?'none':'block';document.querySelectorAll('.movie').forEach(el=>el.addEventListener('click',()=>openItem(+el.dataset.id)))}
 function applyLang(){document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';document.querySelectorAll('[data-i]').forEach(el=>{let v=t(el.dataset.i);if(v.includes('<br>'))el.innerHTML=v;else el.textContent=v});render();$('#language').value=lang}
@@ -77,6 +117,54 @@ $('#loadVideo').textContent=t('loadVideo');$('#playerHelp').textContent=t('playe
 let localVideoUrl=null;
 $('#videoFile').addEventListener('change',e=>{const file=e.target.files&&e.target.files[0];if(!file)return;if(localVideoUrl)URL.revokeObjectURL(localVideoUrl);localVideoUrl=URL.createObjectURL(file);const v=$('#fatiplayVideo');v.src=localVideoUrl;v.load();v.play().catch(()=>{});});
 $('#loadVideo').addEventListener('click',()=>{const raw=$('#videoUrl').value.trim();try{const u=new URL(raw);if(!['http:','https:'].includes(u.protocol))throw new Error('protocol');const v=$('#fatiplayVideo');v.src=u.href;v.load();v.play().catch(()=>{});}catch(e){toast(t('urlError'));}});
-$('#login').onclick=()=>toast(t('loginMsg'));$('#explore').onclick=$('#browse').onclick=()=>document.querySelector('#movies').scrollIntoView({behavior:'smooth'});$('#myList').onclick=()=>document.querySelector('#saved').scrollIntoView({behavior:'smooth'});$('#menu').onclick=()=>toast('FATIPLAY');$('#year').textContent=new Date().getFullYear();applyLang();
+
+function authText(k){return authWords[lang][k]||authWords.ar[k]||k}
+function setAuthMode(mode){
+ authMode=mode;const signup=mode==='signup';
+ $('#signInTab').classList.toggle('active',!signup);$('#signUpTab').classList.toggle('active',signup);
+ $('#nameField').hidden=!signup;$('#confirmField').hidden=!signup;
+ $('#authPassword').autocomplete=signup?'new-password':'current-password';
+ $('#authHeading').textContent=authText(signup?'signUp':'authWelcome');
+ $('#authSubmit').textContent=authText(signup?'signUp':'signIn');
+ $('#authFoot').innerHTML=signup?authText('hasAccount')+' <button class="auth-link" id="switchAuth" type="button">'+authText('signInNow')+'</button>':authText('noAccount')+' <button class="auth-link" id="switchAuth" type="button">'+authText('createOne')+'</button>';
+ $('#switchAuth').onclick=()=>setAuthMode(signup?'signin':'signup');$('#authMessage').textContent='';$('#authMessage').className='auth-message';
+}
+function openAuth(mode='signin'){$('#authModal').classList.add('show');setAuthMode(mode);$('#authEmail').focus()}
+function showAuthMessage(msg,ok=false){$('#authMessage').textContent=msg;$('#authMessage').className='auth-message'+(ok?' ok':'')}
+function updateAuthUi(email){if(email){$('#userChip').style.display='block';$('#userChip').textContent=email;$('#login').textContent=authText('logout');$('#login').dataset.logout='1'}else{$('#userChip').style.display='none';$('#login').textContent=t('login');$('#login').dataset.logout='0'}}
+function authConfigReady(){return SUPABASE_URL.startsWith('https://')&&!SUPABASE_URL.includes('YOUR_PROJECT')&&SUPABASE_ANON_KEY.length>20&&!SUPABASE_ANON_KEY.includes('YOUR_')}
+async function supabaseAuth(path,payload){
+ const response=await fetch(SUPABASE_URL+'/auth/v1/'+path,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_ANON_KEY},body:JSON.stringify(payload)});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'auth');
+ return data;
+}
+$('#login').onclick=()=>{if($('#login').dataset.logout==='1'){localStorage.removeItem('fatiplay_auth');updateAuthUi(null);toast(authText('logoutOk'))}else openAuth('signin')};
+$('#signInTab').onclick=()=>setAuthMode('signin');$('#signUpTab').onclick=()=>setAuthMode('signup');
+$('#authClose').onclick=()=>$('#authModal').classList.remove('show');
+$('#authModal').addEventListener('click',e=>{if(e.target.id==='authModal')$('#authModal').classList.remove('show')});
+$('#authForm').addEventListener('submit',async e=>{
+ e.preventDefault();const email=$('#authEmail').value.trim(),password=$('#authPassword').value,name=$('#authName').value.trim(),confirm=$('#authConfirm').value;
+ if(!authConfigReady()){showAuthMessage(authText('authConfig'));return}
+ if(!email||password.length<8){showAuthMessage(authText('authInvalid'));return}
+ if(authMode==='signup'&&!name){showAuthMessage(authText('authNameRequired'));return}
+ if(authMode==='signup'&&password!==confirm){showAuthMessage(authText('authMismatch'));return}
+ const submit=$('#authSubmit');submit.disabled=true;submit.textContent='…';
+ try{
+  if(authMode==='signup'){
+   const result=await supabaseAuth('signup',{email,password,data:{full_name:name}});
+   showAuthMessage(authText('authSignupOk'),true);
+   if(result.access_token){localStorage.setItem('fatiplay_auth',JSON.stringify(result));updateAuthUi(email)}
+  }else{
+   const result=await supabaseAuth('token?grant_type=password',{email,password});
+   localStorage.setItem('fatiplay_auth',JSON.stringify(result));updateAuthUi(email);
+   showAuthMessage(authText('authLoginOk'),true);setTimeout(()=>$('#authModal').classList.remove('show'),900);
+  }
+ }catch(err){showAuthMessage(authText('authError'))}
+ finally{submit.disabled=false;submit.textContent=authText(authMode==='signup'?'signUp':'signIn')}
+});
+const existingAuth=(()=>{try{return JSON.parse(localStorage.getItem('fatiplay_auth')||'null')}catch(e){return null}})();
+if(existingAuth&&existingAuth.access_token){updateAuthUi(existingAuth.user?.email||'FATIPLAY')}
+$('#explore').onclick=$('#browse').onclick=()=>document.querySelector('#movies').scrollIntoView({behavior:'smooth'});$('#myList').onclick=()=>document.querySelector('#saved').scrollIntoView({behavior:'smooth'});$('#menu').onclick=()=>toast('FATIPLAY');$('#year').textContent=new Date().getFullYear();applyLang();
 </script>
 </body></html>
