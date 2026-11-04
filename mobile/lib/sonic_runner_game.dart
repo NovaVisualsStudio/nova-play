@@ -13,7 +13,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   static const double groundY = 330;
   double get worldWidth => 4200.0 + (stage-1)*420.0;
   Timer? _timer;
-  double x=60, y=groundY-42, vx=0, vy=0, camera=0, jumpBuffer=0, coyote=0, invulnerable=0, loopProgress=0, enemyClock=0;
+  double x=60, y=groundY-42, vx=0, vy=0, camera=0, jumpBuffer=0, coyote=0, invulnerable=0, loopProgress=0, enemyClock=0, dashTimer=0, dashCooldown=0;
   int stage=1, defeatedEnemies=0;
   bool inLoop=false, loopUsed=false, shield=false;
   bool left=false, right=false, jumping=false, rolling=false, grounded=true, paused=true, dead=false, complete=false;
@@ -31,14 +31,14 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   void _start(){if(dead)_reset(preserveStage:true);if(!paused)return;setState(()=>paused=false);_timer??=Timer.periodic(const Duration(milliseconds:16),(_)=>_step(1/60));}
   void _nextStage(){final next=stage>=3?1:stage+1;_reset(preserveStage:true);setState(()=>stage=next);}
   void _pause(){if(!mounted)return;setState(()=>paused=true);}
-  void _reset({bool preserveStage=false}){final currentStage=stage;x=60;y=groundY-42;vx=0;vy=0;camera=0;rings=0;lives=3;score=0;stage=preserveStage?currentStage:1;defeatedEnemies=0;collected.clear();broken.clear();defeated.clear();grounded=true;dead=false;complete=false;invulnerable=0;jumpBuffer=0;coyote=0;loopProgress=0;inLoop=false;loopUsed=false;shield=false;enemyClock=0;}
+  void _reset({bool preserveStage=false}){final currentStage=stage;x=60;y=groundY-42;vx=0;vy=0;camera=0;rings=0;lives=3;score=0;stage=preserveStage?currentStage:1;defeatedEnemies=0;collected.clear();broken.clear();defeated.clear();grounded=true;dead=false;complete=false;invulnerable=0;jumpBuffer=0;coyote=0;loopProgress=0;inLoop=false;loopUsed=false;shield=false;enemyClock=0;dashTimer=0;dashCooldown=0;}
   void _step(double dt){
     if(!mounted||paused||dead||complete)return;dt=dt.clamp(0.0,0.033).toDouble();final oldY=y;
     const accel=1450.0,maxSpeed=520.0,friction=900.0;
     if(left)vx-=accel*dt;if(right)vx+=accel*dt;
     if(!left&&!right&&grounded)vx=vx.abs()<friction*dt?0:vx-vx.sign*friction*dt;
     vx=vx.clamp(-maxSpeed,maxSpeed).toDouble();
-    if(jumpBuffer>0)jumpBuffer-=dt;if(coyote>0)coyote-=dt;if(invulnerable>0)invulnerable-=dt;
+    if(jumpBuffer>0)jumpBuffer-=dt;if(coyote>0)coyote-=dt;if(invulnerable>0)invulnerable-=dt;if(dashTimer>0)dashTimer-=dt;if(dashCooldown>0)dashCooldown-=dt;
     if(jumping)jumpBuffer=.13;
     enemyClock+=dt;
     if(jumpBuffer>0&&(grounded||coyote>0)){vy=-650;grounded=false;jumpBuffer=0;coyote=0;}
@@ -72,7 +72,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
       final enemyX=base.dx+math.sin(enemyClock*1.8+i)*32;
       final enemy=Rect.fromCenter(center:Offset(enemyX,base.dy),width:34,height:30);
       if(playerRect(x,y).overlaps(enemy)){
-        if(vy>120||rolling){defeated.add(i);defeatedEnemies++;score+=150;vy=-420;}
+        if(vy>120||rolling||dashTimer>0){defeated.add(i);defeatedEnemies++;score+=150;vy=-420;}
         else if(invulnerable<=0){if(rings>0){rings=math.max(0,rings-10);invulnerable=1.5;vx=-220;}else if(shield){shield=false;invulnerable=1.5;vx=-220;}else{lives--;invulnerable=1.5;vx=-220;if(lives<=0){dead=true;_pause();}}}
       }
     }
@@ -80,13 +80,13 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
     // A glowing shield pickup gives one free hit.
     if(!shield&&x>2210&&x<2250&&y<groundY-45){shield=true;score+=50;}
     final player=playerRect(x,y);
-    for(final h in hazards){if(player.overlaps(h)&&invulnerable<=0){if(rings>0){rings=0;invulnerable=1.6;vx=-vx.sign*260;vy=-300;}else{lives--;invulnerable=1.6;vx=-vx.sign*220;vy=-320;if(lives<=0){dead=true;_pause();}}}}
+    for(final h in hazards){if(player.overlaps(h)&&invulnerable<=0&&dashTimer<=0){if(rings>0){rings=0;invulnerable=1.6;vx=-vx.sign*260;vy=-300;}else{lives--;invulnerable=1.6;vx=-vx.sign*220;vy=-320;if(lives<=0){dead=true;_pause();}}}}
     if(x<20){x=20;vx=0;}
     if(y>600){lives--;if(lives<=0){dead=true;_pause();}else{x=math.max(60,x-180).toDouble();y=groundY-42;vy=0;rings=0;invulnerable=1.5;}}
     if(x>=worldWidth-100){complete=true;score+=rings*100;_pause();}
     camera=(x-130).clamp(0,worldWidth-360).toDouble();if(mounted)setState((){});jumping=false;
   }
-  void _hold(String a,bool v){setState((){if(a=='left')left=v;if(a=='right')right=v;if(a=='jump'){jumping=v;if(v)jumpBuffer=.13;}if(a=='roll')rolling=v;});}
+  void _dash(){if(paused||dead||complete||dashCooldown>0)return;setState((){final direction=right?1.0:left?-1.0:(vx<0?-1.0:1.0);vx=direction*780;vy=0;dashTimer=.24;dashCooldown=1.35;invulnerable=.28;score+=5;});}\n  void _hold(String a,bool v){setState((){if(a=='left')left=v;if(a=='right')right=v;if(a=='jump'){jumping=v;if(v)jumpBuffer=.13;}if(a=='roll')rolling=v;});}
   void _resetAndPause(){_pause();setState(_reset);}
   @override void dispose(){_timer?.cancel();super.dispose();}
 
@@ -105,7 +105,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
             Text(dead?t('انتهت المحاولة','Partie terminée','Game over'):complete?(stage==3?t('أنهيت جميع المراحل!','Tous les niveaux terminés !','All stages complete!'):t('أكملت المرحلة!','Niveau terminé !','Stage complete!')):t('مستعد للانطلاق؟','Prêt à courir ?','Ready to run?'),style:const TextStyle(fontSize:26,fontWeight:FontWeight.w900,color:Colors.white)),
             const SizedBox(height:12),FilledButton.icon(onPressed:complete?_nextStage:_start,icon:const Icon(Icons.play_arrow),label:Text(complete?(stage==3?t('إعادة جميع المراحل','Recommencer','Restart all'):t('المرحلة التالية','Niveau suivant','Next stage')):t('ابدأ اللعب','Jouer','Play')))])))),
           Positioned(left:12,bottom:12,child:Row(children:[_control(Icons.arrow_back,()=>_hold('left',true),()=>_hold('left',false)),const SizedBox(width:8),_control(Icons.arrow_forward,()=>_hold('right',true),()=>_hold('right',false))])),
-          Positioned(right:12,bottom:12,child:Row(children:[_control(Icons.south,()=>_hold('roll',true),()=>_hold('roll',false),color:const Color(0xFFEF9B35)),const SizedBox(width:8),_control(Icons.arrow_upward,()=>_hold('jump',true),()=>_hold('jump',false),color:const Color(0xFF27C7E7))]))
+          Positioned(right:12,bottom:12,child:Row(children:[_control(Icons.south,()=>_hold('roll',true),()=>_hold('roll',false),color:const Color(0xFFEF9B35)),const SizedBox(width:8),_control(Icons.bolt,_dash,_dash,color:const Color(0xFFFFC247)),const SizedBox(width:8),_control(Icons.arrow_upward,()=>_hold('jump',true),()=>_hold('jump',false),color:const Color(0xFF27C7E7))]))
         ])))),
         Padding(padding:const EdgeInsets.all(8),child:Text(t('اجمع الحلقات، اقفز فوق الأشواك، وحافظ على سرعتك.','Ramassez les anneaux, sautez les pics et gardez votre vitesse.','Collect rings, jump over spikes and keep your momentum.'),textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,fontSize:12)))
       ]))));
