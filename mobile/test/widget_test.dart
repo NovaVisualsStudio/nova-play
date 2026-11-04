@@ -488,6 +488,9 @@ void main() {
     await tester.pump(const Duration(milliseconds: 80));
 
     expect(find.text('⭐ 5'), findsOneWidget);
+    // The HUD exposes the true burst speed: 780 / 6.9 rounds to 113%.
+    // This catches regressions where the normal 520 speed cap cancels the dash.
+    expect(find.text('113%'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
