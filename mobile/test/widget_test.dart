@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nova_play/main.dart';
 
 void configurePhoneViewport(WidgetTester tester) {
-  tester.view.physicalSize = const Size(800, 1000);
+  tester.view.physicalSize = const Size(393, 873);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
@@ -37,6 +37,20 @@ void main() {
     expect(find.text('اختبار الذاكرة'), findsOneWidget);
     expect(find.text('سرعة الاستجابة'), findsOneWidget);
     expect(find.text('اختبر معلوماتك'), findsOneWidget);
+  });
+
+  testWidgets('home screen remains usable on a compact Android phone', (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+
+    expect(find.text('NOVA PLAY'), findsOneWidget);
+    expect(find.text('تحدي إكس أو'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('memory game opens and displays twelve cards', (tester) async {
