@@ -39,6 +39,7 @@ void main() {
     expect(find.text('اختبار الذاكرة'), findsOneWidget);
     expect(find.text('سرعة الاستجابة'), findsOneWidget);
     expect(find.text('اختبر معلوماتك'), findsOneWidget);
+    expect(find.text('باك مان'), findsOneWidget);
   });
 
   testWidgets('home screen remains usable on a compact Android phone', (tester) async {
@@ -364,6 +365,56 @@ void main() {
     expect(find.text('انتهت اللعبة!'), findsOneWidget);
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getInt('best_snake'), isNotNull);
+    expect(tester.takeException(), isNull);
+  });
+
+
+  testWidgets('Pac-Man opens with maze, lives, score, rules and controls', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'باك مان');
+
+    expect(find.text('PAC-MAN'), findsOneWidget);
+    expect(find.text('الأرواح'), findsOneWidget);
+    expect(find.text('ابدأ اللعب'), findsOneWidget);
+    expect(find.textContaining('اجمع النقاط'), findsOneWidget);
+    expect(find.byType(GridView), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Pac-Man starts, pauses and resets cleanly', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: PacManGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('ابدأ اللعب'));
+    await tester.pump();
+    expect(find.text('إيقاف مؤقت'), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.tap(find.text('إيقاف مؤقت'));
+    await tester.pump();
+    expect(find.text('ابدأ اللعب'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(find.text('ابدأ اللعب'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Pac-Man supports French and English labels', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: PacManGamePage(lang: 'fr')));
+    await tester.pumpAndSettle();
+    expect(find.text('Démarrer'), findsOneWidget);
+    expect(find.text('Vies'), findsOneWidget);
+
+    await tester.pumpWidget(const MaterialApp(home: PacManGamePage(lang: 'en')));
+    await tester.pumpAndSettle();
+    expect(find.text('Start'), findsOneWidget);
+    expect(find.text('Lives'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
