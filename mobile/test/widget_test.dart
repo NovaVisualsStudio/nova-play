@@ -22,40 +22,6 @@ Future<void> openGame(
   await tester.ensureVisible(game);
   await tester.tap(game);
   await tester.pumpAndSettle();
-  testWidgets('Velocity Runner advances through its high-speed course without exceptions', (tester) async {
-    configurePhoneViewport(tester);
-    await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'en')));
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Play'));
-    await tester.pump();
-
-    final rightControl = find.byIcon(Icons.arrow_forward);
-    final gesture = await tester.startGesture(tester.getCenter(rightControl));
-    await tester.pump(const Duration(seconds: 7));
-    await gesture.up();
-    await tester.pump(const Duration(milliseconds: 100));
-
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('every home game card uses its own custom vector emblem', (tester) async {
-    configurePhoneViewport(tester);
-    await tester.pumpWidget(MaterialApp(
-      home: Wrap(children: [
-        for (final id in ['xo','memory','quick','quiz','snake','chess','pacman','sonic'])
-          SizedBox(width: 52, height: 52, child: GameArtwork(gameId: id)),
-      ]),
-    ));
-    await tester.pumpAndSettle();
-
-    final artwork = find.byType(GameArtwork);
-    expect(artwork, findsNWidgets(8));
-    final ids = tester.widgetList<GameArtwork>(artwork)
-        .map((widget) => widget.gameId).toSet();
-    expect(ids.length, 8);
-    expect(tester.takeException(), isNull);
-  });
 
 }
 
@@ -501,6 +467,42 @@ void main() {
     await tester.tap(find.byIcon(Icons.refresh));
     await tester.pumpAndSettle();
     expect(find.text('مستعد للانطلاق؟'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+
+  testWidgets('Velocity Runner advances through its high-speed course without exceptions', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'en')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Play'));
+    await tester.pump();
+
+    final rightControl = find.byIcon(Icons.arrow_forward);
+    final gesture = await tester.startGesture(tester.getCenter(rightControl));
+    await tester.pump(const Duration(seconds: 7));
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('every home game card uses its own custom vector emblem', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(MaterialApp(
+      home: Wrap(children: [
+        for (final id in ['xo','memory','quick','quiz','snake','chess','pacman','sonic'])
+          SizedBox(width: 52, height: 52, child: GameArtwork(gameId: id)),
+      ]),
+    ));
+    await tester.pumpAndSettle();
+
+    final artwork = find.byType(GameArtwork);
+    expect(artwork, findsNWidgets(8));
+    final ids = tester.widgetList<GameArtwork>(artwork)
+        .map((widget) => widget.gameId).toSet();
+    expect(ids.length, 8);
     expect(tester.takeException(), isNull);
   });
 
