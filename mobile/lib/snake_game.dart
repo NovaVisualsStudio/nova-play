@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'game_artwork.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SnakeGamePage extends StatefulWidget {
@@ -144,7 +145,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
     textDirection: widget.lang == 'ar' ? TextDirection.rtl : TextDirection.ltr,
     child: Scaffold(
       backgroundColor: const Color(0xFF090D1B),
-      appBar: AppBar(title: Text(tr('لعبة الأفعى', 'Jeu du serpent', 'Snake')), actions: [
+      appBar: AppBar(title: Row(mainAxisSize: MainAxisSize.min, children: [GameArtwork(gameId: 'snake', width: 42), const SizedBox(width: 9), Text(tr('لعبة الأفعى', 'Jeu du serpent', 'Snake'))]), actions: [
         IconButton(onPressed: _pause, icon: Icon(paused ? Icons.play_arrow : Icons.pause)),
         IconButton(onPressed: _reset, icon: const Icon(Icons.refresh)),
       ]),
