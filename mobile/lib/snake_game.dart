@@ -18,6 +18,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
   Timer? timer;
   int score = 0, best = 0, stage = 1, coins = 0;
   bool started = false, paused = false, over = false, ending = false;
+  int roundId = 0;
   String tr(String a, String f, String e) => widget.lang == 'ar' ? a : widget.lang == 'fr' ? f : e;
 
   @override
@@ -27,8 +28,17 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
     if (!mounted) return;
     setState(() { best = p.getInt('best_snake') ?? 0; stage = p.getInt('stage_snake') ?? 1; coins = p.getInt('nova_coins') ?? 0; });
   }
-  void _food() {
-    do { food = Point(rng.nextInt(n), rng.nextInt(n)); } while (snake.contains(food));
+  bool _food() {
+    final empty = <Point<int>>[];
+    for (var y = 0; y < n; y++) {
+      for (var x = 0; x < n; x++) {
+        final cell = Point(x, y);
+        if (!snake.contains(cell)) empty.add(cell);
+      }
+    }
+    if (empty.isEmpty) return false;
+    food = empty[rng.nextInt(empty.length)];
+    return true;
   }
   int get speed => max(85, 190 - (score ~/ 3) * 8);
   void _start() {
@@ -48,16 +58,21 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
       _end();
       return;
     }
+    var boardFilled = false;
     setState(() {
       dir = candidateDirection;
       snake.insert(0, head);
       if (eating) {
         score++;
-        _food();
+        boardFilled = !_food();
       } else {
         snake.removeLast();
       }
     });
+    if (boardFilled) {
+      _end();
+      return;
+    }
     if (eating) {
       timer?.cancel();
       timer = Timer.periodic(Duration(milliseconds: speed), (_) => _tick());
@@ -71,6 +86,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
   Future<void> _end() async {
     if (ending || over) return;
     ending = true;
+    final completedRound = roundId;
     timer?.cancel();
     if (mounted) setState(() { over = true; started = false; paused = false; });
     final p = await SharedPreferences.getInstance();
@@ -85,7 +101,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
       await p.setInt('stage_snake', stage);
       await p.setInt('nova_coins', coins);
     }
-    if (!mounted) return;
+    if (!mounted || completedRound != roundId) return;
     showDialog<void>(context: context, barrierDismissible: false, builder: (d) => AlertDialog(
       backgroundColor: const Color(0xFF151C31),
       title: Text(tr('انتهت اللعبة!', 'Partie terminée !', 'Game over!')),
@@ -99,6 +115,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
     ));
   }
   void _reset() {
+    roundId++;
     timer?.cancel();
     setState(() {
       snake..clear()..addAll([const Point(8, 9), const Point(7, 9), const Point(6, 9)]);
