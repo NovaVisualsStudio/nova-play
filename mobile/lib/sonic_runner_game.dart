@@ -37,7 +37,10 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
     const accel=1450.0,maxSpeed=520.0,friction=900.0;
     if(left)vx-=accel*dt;if(right)vx+=accel*dt;
     if(!left&&!right&&grounded)vx=vx.abs()<friction*dt?0:vx-vx.sign*friction*dt;
-    vx=vx.clamp(-maxSpeed,maxSpeed).toDouble();
+    // Pulse Dash temporarily raises the speed ceiling so the dash is not
+    // immediately clipped by the normal running limit on the next physics tick.
+    final speedLimit=dashTimer>0?780.0:maxSpeed;
+    vx=vx.clamp(-speedLimit,speedLimit).toDouble();
     if(jumpBuffer>0)jumpBuffer-=dt;if(coyote>0)coyote-=dt;if(invulnerable>0)invulnerable-=dt;if(dashTimer>0)dashTimer-=dt;if(dashCooldown>0)dashCooldown-=dt;
     if(jumping)jumpBuffer=.13;
     enemyClock+=dt;
