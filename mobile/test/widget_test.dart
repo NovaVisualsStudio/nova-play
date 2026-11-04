@@ -319,7 +319,7 @@ void main() {
     await tester.pump();
     expect(find.text('إيقاف مؤقت'), findsOneWidget);
 
-    await tester.tap(find.byTooltip('إيقاف مؤقت'));
+    await tester.tap(find.text('إيقاف مؤقت'));
     await tester.pump();
     expect(find.text('اللعبة متوقفة مؤقتاً'), findsOneWidget);
 
