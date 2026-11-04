@@ -23,6 +23,8 @@ jobs:
         run: flutter pub get
       - name: Analyze
         run: flutter analyze
+      - name: Run widget tests
+        run: flutter test
       - name: Build release APK
         run: flutter build apk --release
       - name: Build Google Play App Bundle
