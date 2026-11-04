@@ -32,7 +32,50 @@ String? winner(){const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0
 Widget body(){switch(widget.game.id){case'xo':return xo();case'memory':return memory();case'quick':return quick();default:return quiz();}}
 Widget xo(){final w=winner();return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(w==null?'X     O':w=='D'?tr(widget.lang,'draw'):tr(widget.lang,'win'),style:const TextStyle(fontSize:21,fontWeight:FontWeight.bold)),const SizedBox(height:20),AspectRatio(aspectRatio:1,child:GridView.builder(physics:const NeverScrollableScrollPhysics(),itemCount:9,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:9,mainAxisSpacing:9),itemBuilder:(c,i)=>InkWell(onTap:()=>move(i),child:Container(decoration:BoxDecoration(color:panel,borderRadius:BorderRadius.circular(17)),child:Center(child:Text(board[i],style:TextStyle(fontSize:42,fontWeight:FontWeight.w900,color:board[i]=='X'?purple:cyan))))))),if(w!=null)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);}
 void move(int i){if(board[i].isNotEmpty||winner()!=null)return;setState(()=>board[i]='X');if(winner()=='X'){save(10);return;}final e=List.generate(9,(j)=>j).where((j)=>board[j].isEmpty).toList();if(e.isNotEmpty)setState(()=>board[e[rng.nextInt(e.length)]]='O');}
-Widget memory()=>Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'pairs')+': '+(matched.length~/2).toString()+' / 6'),const SizedBox(height:18),GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:12,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:4,crossAxisSpacing:9,mainAxisSpacing:9),itemBuilder:(c,i)=>InkWell(onTap:()=>flip(i),child:Container(decoration:BoxDecoration(color:matched.contains(i)?cyan.withOpacity(.2):panel,borderRadius:BorderRadius.circular(14)),child:Center(child:Text(open.contains(i)||matched.contains(i)?['🍉','🚀','🎯','🐼','⭐','🎮'][cards[i]]:'?',style:const TextStyle(fontSize:27))))))),if(matched.length==12)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);}
+Widget memory() {
+  return Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Text('${tr(widget.lang, 'pairs')}: ${matched.length ~/ 2} / 6'),
+      const SizedBox(height: 18),
+      GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: 12,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4,
+          crossAxisSpacing: 9,
+          mainAxisSpacing: 9,
+        ),
+        itemBuilder: (context, index) {
+          final isVisible = open.contains(index) || matched.contains(index);
+          final isMatched = matched.contains(index);
+          final emojis = ['🍉', '🚀', '🎯', '🐼', '⭐', '🎮'];
+          return InkWell(
+            onTap: () => flip(index),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isMatched ? cyan.withOpacity(.2) : panel,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Center(
+                child: Text(
+                  isVisible ? emojis[cards[index]] : '?',
+                  style: const TextStyle(fontSize: 27),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+      if (matched.length == 12)
+        FilledButton(
+          onPressed: reset,
+          child: Text(tr(widget.lang, 'again')),
+        ),
+    ],
+  );
+}
 void flip(int i){if(open.contains(i)||matched.contains(i)||open.length>=2)return;setState(()=>open.add(i));if(open.length==2){moves++;final pair=open.toList();if(cards[pair[0]]==cards[pair[1]]){setState(()=>matched.addAll(pair));if(matched.length==12)save(max(1,100-moves));}else{Future.delayed(const Duration(milliseconds:700),(){if(mounted)setState(()=>open.clear());});}}}
 Widget quick()=>Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'tap'),style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:15),Text(started?'$seconds s':'10 s',style:const TextStyle(fontSize:35,color:cyan,fontWeight:FontWeight.w900)),const SizedBox(height:20),GestureDetector(onTap:(){if(finished)return;if(!started){setState(()=>started=true);Future.doWhile(()async{await Future.delayed(const Duration(seconds:1));if(!mounted||!started)return false;setState(()=>seconds--);if(seconds<=0){started=false;finished=true;save(taps);return false;}return true;});}if(started)setState(()=>taps++);},child:Container(width:205,height:205,decoration:const BoxDecoration(shape:BoxShape.circle,gradient:LinearGradient(colors:[purple,Color(0xFF4B3A9B)])),child:Center(child:Text(finished?taps.toString():started?taps.toString():tr(widget.lang,'start'),style:const TextStyle(fontSize:30,fontWeight:FontWeight.w900))))),if(finished)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);
 Widget quiz(){if(q>=qs.length)return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'done'),style:const TextStyle(fontSize:23,fontWeight:FontWeight.bold)),Text(points.toString()+' / 5',style:const TextStyle(fontSize:36,color:cyan)),FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);final item=qs[q];return Column(mainAxisAlignment:MainAxisAlignment.center,crossAxisAlignment:CrossAxisAlignment.stretch,children:[Text(tr(widget.lang,'question')+' '+(q+1).toString()+' / 5',style:const TextStyle(color:cyan,fontWeight:FontWeight.bold)),const SizedBox(height:16),Text(item.$1,style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:20),...item.$3.map((o)=>Padding(padding:const EdgeInsets.only(bottom:10),child:OutlinedButton(onPressed:answered?null:(){setState(()=>answered=true);if(o==item.$2)points++;},child:Text(o,style:const TextStyle(fontSize:17))))),if(answered)FilledButton(onPressed:(){setState((){q++;answered=false;});if(q==5)save(points*10);},child:Text(tr(widget.lang,'next')))]);}
