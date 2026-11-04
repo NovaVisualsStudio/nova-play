@@ -118,7 +118,7 @@ class _RunnerPainter extends CustomPainter{
     final colors=stage==1?[const Color(0xFF48C9F0),const Color(0xFFB9F4E8),const Color(0xFF61B76C)]:stage==2?[const Color(0xFF392B78),const Color(0xFF8A6AC8),const Color(0xFFCF8B68)]:[const Color(0xFF301B36),const Color(0xFFB84A4A),const Color(0xFFF0A34B)];
     final sky=Paint()..shader=LinearGradient(colors:colors,begin:Alignment.topCenter,end:Alignment.bottomCenter).createShader(Offset.zero&size);canvas.drawRect(Offset.zero&size,sky);canvas.save();canvas.translate(-camera,0);
     final hill=Paint()..color=const Color(0xFF26965F);for(int i=0;i<15;i++){final xx=i*320.0;canvas.drawOval(Rect.fromLTWH(xx,225+(i%3)*20,260,110),hill);}
-    canvas.drawRect(Rect.fromLTWH(0,330,worldWidth,400),Paint()..color:stage==3?const Color(0xFF59404A):const Color(0xFFB77A3B));canvas.drawRect(Rect.fromLTWH(0,330,worldWidth,13),Paint()..color:stage==3?const Color(0xFFFF8C42):stage==2?const Color(0xFF9A70D0):const Color(0xFF32B85C));
+    canvas.drawRect(Rect.fromLTWH(0,330,worldWidth,400),Paint()..color=stage==3?const Color(0xFF59404A):const Color(0xFFB77A3B));canvas.drawRect(Rect.fromLTWH(0,330,worldWidth,13),Paint()..color=stage==3?const Color(0xFFFF8C42):stage==2?const Color(0xFF9A70D0):const Color(0xFF32B85C));
     final stripe=Paint()..color=const Color(0xFF8A542B);for(int i=0;i<80;i++){canvas.drawRect(Rect.fromLTWH(i*55.0,354+(i%4)*38,24,7),stripe);}
     for(final p in platforms){canvas.drawRect(p,Paint()..color=const Color(0xFF8D633C));canvas.drawRect(Rect.fromLTWH(p.left,p.top,p.width,5),Paint()..color=const Color(0xFF42C86B));}
     // Curved high-speed track and banked slope artwork.
