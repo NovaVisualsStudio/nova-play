@@ -10,7 +10,8 @@ class SonicRunnerPage extends StatefulWidget {
 }
 
 class _SonicRunnerPageState extends State<SonicRunnerPage> {
-  static const double worldWidth = 4200, groundY = 330;
+  static const double groundY = 330;
+  double get worldWidth => 4200 + (stage-1)*420;
   Timer? _timer;
   double x=60, y=groundY-42, vx=0, vy=0, camera=0, jumpBuffer=0, coyote=0, invulnerable=0, loopProgress=0, enemyClock=0;
   int stage=1, defeatedEnemies=0;
@@ -18,18 +19,19 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   bool left=false, right=false, jumping=false, rolling=false, grounded=true, paused=true, dead=false, complete=false;
   int rings=0, lives=3, score=0;
   final Set<int> collected={}, broken={};
-  final ringPoints=List<Offset>.generate(45,(i)=>Offset(180+i*86.0,groundY-78-(i%3)*18.0));
-  final hazards=<Rect>[const Rect.fromLTWH(650,groundY-24,34,24),const Rect.fromLTWH(1120,groundY-24,34,24),const Rect.fromLTWH(1750,groundY-24,68,24),const Rect.fromLTWH(2520,groundY-24,34,24),const Rect.fromLTWH(3280,groundY-24,68,24)];
-  final platforms=<Rect>[const Rect.fromLTWH(850,245,230,18),const Rect.fromLTWH(1370,210,250,18),const Rect.fromLTWH(2100,250,250,18),const Rect.fromLTWH(2800,215,250,18)];
+  List<Offset> get ringPoints => List<Offset>.generate(45+stage*4,(i)=>Offset(180+i*(stage==1?86.0:78.0),groundY-40-(i%3)*22.0));
+  List<Rect> get hazards => [650.0,1120.0,1750.0,2520.0,3280.0].asMap().entries.map((e)=>Rect.fromLTWH(e.value+(stage-1)*45,groundY-24,e.key==2||e.key==4?68:34,24)).toList();
+  List<Rect> get platforms => [const Rect.fromLTWH(850,245,230,18),const Rect.fromLTWH(1370,210,250,18),const Rect.fromLTWH(2100,250,250,18),const Rect.fromLTWH(2800,215,250,18)].map((p)=>p.shift(Offset((stage-1)*55,(stage-1)*-10))).toList();
   final springs=<Rect>[const Rect.fromLTWH(980,groundY-16,34,16),const Rect.fromLTWH(1900,groundY-16,34,16),const Rect.fromLTWH(3000,groundY-16,34,16)];
   final enemyBases=<Offset>[const Offset(760,groundY-24),const Offset(1220,groundY-24),const Offset(2360,groundY-24),const Offset(3140,groundY-24)];
   final Set<int> defeated={};
   String t(String ar,String fr,String en)=>lang=='ar'?ar:lang=='fr'?fr:en;
   String get lang=>widget.lang;
 
-  void _start(){if(dead||complete)_reset();if(!paused)return;setState(()=>paused=false);_timer??=Timer.periodic(const Duration(milliseconds:16),(_)=>_step(1/60));}
+  void _start(){if(dead)_reset(preserveStage:true);if(!paused)return;setState(()=>paused=false);_timer??=Timer.periodic(const Duration(milliseconds:16),(_)=>_step(1/60));}
+  void _nextStage(){final next=stage>=3?1:stage+1;_reset(preserveStage:true);setState(()=>stage=next);}
   void _pause(){if(!mounted)return;setState(()=>paused=true);}
-  void _reset(){x=60;y=groundY-42;vx=0;vy=0;camera=0;rings=0;lives=3;score=0;stage=1;defeatedEnemies=0;collected.clear();broken.clear();defeated.clear();grounded=true;dead=false;complete=false;invulnerable=0;jumpBuffer=0;coyote=0;loopProgress=0;inLoop=false;shield=false;enemyClock=0;}
+  void _reset({bool preserveStage=false}){final currentStage=stage;x=60;y=groundY-42;vx=0;vy=0;camera=0;rings=0;lives=3;score=0;stage=preserveStage?currentStage:1;defeatedEnemies=0;collected.clear();broken.clear();defeated.clear();grounded=true;dead=false;complete=false;invulnerable=0;jumpBuffer=0;coyote=0;loopProgress=0;inLoop=false;shield=false;enemyClock=0;}
   void _step(double dt){
     if(!mounted||paused||dead||complete)return;dt=dt.clamp(0.0,0.033).toDouble();final oldY=y;
     const accel=1450.0,maxSpeed=520.0,friction=900.0;
@@ -91,12 +93,12 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
       body:SafeArea(child:Column(children:[
         Padding(padding:const EdgeInsets.symmetric(horizontal:14,vertical:8),child:Row(mainAxisAlignment:MainAxisAlignment.spaceAround,children:[
           _stat('💍 '+rings.toString(),t('الحلقات','Anneaux','Rings')),_stat('❤️ '+lives.toString(),t('الأرواح','Vies','Lives')),
-          _stat('⭐ '+score.toString(),t('النقاط','Score','Score')),_stat((vx.abs()/5.2).round().toString()+'%',t('السرعة','Vitesse','Speed'))])),
+          _stat('⭐ '+score.toString(),t('النقاط','Score','Score')),_stat('🏁 $stage/3',t('المرحلة','Niveau','Stage')),_stat((vx.abs()/6.9).round().toString()+'%',t('السرعة','Vitesse','Speed'))])),
         Expanded(child:LayoutBuilder(builder:(context,c)=>ClipRect(child:Stack(children:[
-          Positioned.fill(child:CustomPaint(painter:_RunnerPainter(camera:camera,playerX:x,playerY:y,rings:ringPoints,collected:collected,hazards:hazards,platforms:platforms,springs:springs,enemies:enemyBases,defeated:defeated,worldWidth:worldWidth,invulnerable:invulnerable>0,inLoop:inLoop,loopProgress:loopProgress,shield:shield))),
+          Positioned.fill(child:CustomPaint(painter:_RunnerPainter(camera:camera,playerX:x,playerY:y,rings:ringPoints,collected:collected,hazards:hazards,platforms:platforms,springs:springs,enemies:enemyBases,defeated:defeated,worldWidth:worldWidth,invulnerable:invulnerable>0,inLoop:inLoop,loopProgress:loopProgress,shield:shield,stage:stage))),
           if(paused||dead||complete)Positioned.fill(child:Container(color:Colors.black.withOpacity(.58),child:Center(child:Column(mainAxisSize:MainAxisSize.min,children:[
-            Text(dead?t('انتهت المحاولة','Partie terminée','Game over'):complete?t('أكملت المرحلة!','Niveau terminé !','Level complete!'):t('مستعد للانطلاق؟','Prêt à courir ?','Ready to run?'),style:const TextStyle(fontSize:26,fontWeight:FontWeight.w900,color:Colors.white)),
-            const SizedBox(height:12),FilledButton.icon(onPressed:_start,icon:const Icon(Icons.play_arrow),label:Text(t('ابدأ اللعب','Jouer','Play')))])))),
+            Text(dead?t('انتهت المحاولة','Partie terminée','Game over'):complete?(stage==3?t('أنهيت جميع المراحل!','Tous les niveaux terminés !','All stages complete!'):t('أكملت المرحلة!','Niveau terminé !','Stage complete!')):t('مستعد للانطلاق؟','Prêt à courir ?','Ready to run?'),style:const TextStyle(fontSize:26,fontWeight:FontWeight.w900,color:Colors.white)),
+            const SizedBox(height:12),FilledButton.icon(onPressed:complete?_nextStage:_start,icon:const Icon(Icons.play_arrow),label:Text(complete?(stage==3?t('إعادة جميع المراحل','Recommencer','Restart all'):t('المرحلة التالية','Niveau suivant','Next stage')):t('ابدأ اللعب','Jouer','Play')))])))),
           Positioned(left:12,bottom:12,child:Row(children:[_control(Icons.arrow_back,()=>_hold('left',true),()=>_hold('left',false)),const SizedBox(width:8),_control(Icons.arrow_forward,()=>_hold('right',true),()=>_hold('right',false))])),
           Positioned(right:12,bottom:12,child:Row(children:[_control(Icons.south,()=>_hold('roll',true),()=>_hold('roll',false),color:const Color(0xFFEF9B35)),const SizedBox(width:8),_control(Icons.arrow_upward,()=>_hold('jump',true),()=>_hold('jump',false),color:const Color(0xFF27C7E7))]))
         ])))),
@@ -110,12 +112,13 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
 
 class _RunnerPainter extends CustomPainter{
   static const double groundY=330;
-  final double camera,playerX,playerY,worldWidth,loopProgress;final List<Offset> rings,enemies;final Set<int> collected,defeated;final List<Rect> hazards,platforms,springs;final bool invulnerable,inLoop,shield;
-  _RunnerPainter({required this.camera,required this.playerX,required this.playerY,required this.rings,required this.collected,required this.hazards,required this.platforms,required this.springs,required this.enemies,required this.defeated,required this.worldWidth,required this.invulnerable,required this.inLoop,required this.loopProgress,required this.shield});
+  final double camera,playerX,playerY,worldWidth,loopProgress;final List<Offset> rings,enemies;final Set<int> collected,defeated;final List<Rect> hazards,platforms,springs;final bool invulnerable,inLoop,shield;final int stage;
+  _RunnerPainter({required this.camera,required this.playerX,required this.playerY,required this.rings,required this.collected,required this.hazards,required this.platforms,required this.springs,required this.enemies,required this.defeated,required this.worldWidth,required this.invulnerable,required this.inLoop,required this.loopProgress,required this.shield,required this.stage});
   @override void paint(Canvas canvas,Size size){
-    final sky=Paint()..shader=const LinearGradient(colors:[Color(0xFF48C9F0),Color(0xFFB9F4E8),Color(0xFF61B76C)],begin:Alignment.topCenter,end:Alignment.bottomCenter).createShader(Offset.zero&size);canvas.drawRect(Offset.zero&size,sky);canvas.save();canvas.translate(-camera,0);
+    final colors=stage==1?[const Color(0xFF48C9F0),const Color(0xFFB9F4E8),const Color(0xFF61B76C)]:stage==2?[const Color(0xFF392B78),const Color(0xFF8A6AC8),const Color(0xFFCF8B68)]:[const Color(0xFF301B36),const Color(0xFFB84A4A),const Color(0xFFF0A34B)];
+    final sky=Paint()..shader=LinearGradient(colors:colors,begin:Alignment.topCenter,end:Alignment.bottomCenter).createShader(Offset.zero&size);canvas.drawRect(Offset.zero&size,sky);canvas.save();canvas.translate(-camera,0);
     final hill=Paint()..color=const Color(0xFF26965F);for(int i=0;i<15;i++){final xx=i*320.0;canvas.drawOval(Rect.fromLTWH(xx,225+(i%3)*20,260,110),hill);}
-    canvas.drawRect(Rect.fromLTWH(0,330,worldWidth,400),Paint()..color=const Color(0xFFB77A3B));canvas.drawRect(Rect.fromLTWH(0,330,worldWidth,13),Paint()..color=const Color(0xFF32B85C));
+    canvas.drawRect(Rect.fromLTWH(0,330,worldWidth,400),Paint()..color:stage==3?const Color(0xFF59404A):const Color(0xFFB77A3B));canvas.drawRect(Rect.fromLTWH(0,330,worldWidth,13),Paint()..color:stage==3?const Color(0xFFFF8C42):stage==2?const Color(0xFF9A70D0):const Color(0xFF32B85C));
     final stripe=Paint()..color=const Color(0xFF8A542B);for(int i=0;i<80;i++){canvas.drawRect(Rect.fromLTWH(i*55.0,354+(i%4)*38,24,7),stripe);}
     for(final p in platforms){canvas.drawRect(p,Paint()..color=const Color(0xFF8D633C));canvas.drawRect(Rect.fromLTWH(p.left,p.top,p.width,5),Paint()..color=const Color(0xFF42C86B));}
     // Curved high-speed track and banked slope artwork.
