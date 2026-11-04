@@ -92,6 +92,25 @@ void main() {
     expect(find.text('السؤال 1 / 5'), findsOneWidget);
   });
 
+  testWidgets('completing the quiz saves its score for that game', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'اختبر معلوماتك');
+
+    for (final answer in ['المشتري', '7', 'الرباط', 'الجمل', '56']) {
+      await tester.tap(find.text(answer).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('التالي'));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('50 / 5'), findsOneWidget);
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getInt('best_quiz'), 50);
+    expect(preferences.getInt('best'), 50);
+  });
+
   testWidgets('language menu switches the home screen to French', (tester) async {
     configurePhoneViewport(tester);
     await tester.pumpWidget(const NovaPlay());
