@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'game_artwork.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -172,6 +173,7 @@ class _PacManGamePageState extends State<PacManGamePage> with WidgetsBindingObse
 
   void _queue(_Move move) {
     if (_over) return;
+    HapticFeedback.selectionClick();
     setState(() => _queued = move);
     if (!_started && !_paused) _start();
   }
