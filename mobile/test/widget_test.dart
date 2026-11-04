@@ -33,7 +33,7 @@ Future<void> openGame(
 
     final preferences = await SharedPreferences.getInstance();
     await preferences.setInt('best', 123);
-    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
 
     expect(find.text('أفضل نتيجة: 123'), findsOneWidget);
