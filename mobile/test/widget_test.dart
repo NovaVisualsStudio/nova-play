@@ -72,6 +72,15 @@ void main() {
 
     expect(find.text('1'), findsOneWidget);
     expect(find.text('10 s'), findsOneWidget);
+
+    // Let the countdown finish so its asynchronous timer is not left pending
+    // when the widget test disposes the page.
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+    }
+    await tester.pumpAndSettle();
+    expect(find.text('انتهى التحدي'), findsOneWidget);
   });
 
   testWidgets('quiz game displays its first question and answers', (tester) async {
