@@ -246,12 +246,10 @@ void main() {
     expect(positions.length, 6);
     for (final pair in positions.values) {
       expect(pair.length, 2);
-      await tester.tap(cards.at(pair[0]));
-      await tester.pump();
-      await tester.tap(cards.at(pair[1]));
-      await tester.pumpAndSettle();
     }
 
+    // The discovery taps above have already matched every pair. Do not tap
+    // matched cards again: the completion dialog intentionally blocks input.
     expect(find.text('الأزواج: 6 / 6'), findsOneWidget);
     expect(find.text('مرحلة مكتملة!'), findsOneWidget);
     await tester.tap(find.text('متابعة'));
@@ -488,7 +486,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('every home game card uses its own custom vector emblem', (tester) async {
+  testWidgets('every home game card uses its own dedicated 3D artwork', (tester) async {
     configurePhoneViewport(tester);
     await tester.pumpWidget(MaterialApp(
       home: Wrap(children: [
