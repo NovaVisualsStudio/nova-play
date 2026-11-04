@@ -44,13 +44,13 @@ class PacManGamePage extends StatefulWidget {
 class _PacManGamePageState extends State<PacManGamePage> {
   static const int _w = 15;
   static const int _h = 17;
-  static const int _start = _w + 1;
+  static const int _playerHomeCell = _w + 1;
   static const int _ghostStart = 7 * _w + 7;
   final List<int> _pellets = <int>[];
   final List<int> _power = <int>[];
   final List<_Ghost> _ghosts = <_Ghost>[];
   Timer? _timer;
-  int _player = _start;
+  int _player = _playerHomeCell;
   _Move _direction = _Move.left;
   _Move? _queued;
   int _score = 0;
@@ -111,7 +111,7 @@ class _PacManGamePageState extends State<PacManGamePage> {
         if (_maze[y][x] == 'o') _power.add(cell);
       }
     }
-    _player = _start;
+    _player = _playerHomeCell;
     _direction = _Move.left;
     _queued = null;
     _ghosts
@@ -257,7 +257,7 @@ class _PacManGamePageState extends State<PacManGamePage> {
         if (_lives <= 0) {
           _finish(false);
         } else {
-          _player = _start;
+          _player = _playerHomeCell;
           _direction = _Move.left;
           _queued = null;
           for (var i = 0; i < _ghosts.length; i++) {
