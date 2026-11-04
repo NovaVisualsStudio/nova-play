@@ -149,7 +149,17 @@ jobs:
           if not re.search(r"targetSdk\s*=\s*36|targetSdkVersion\s+36", text):
               raise SystemExit("Could not enforce targetSdk 36.")
           gradle.write_text(text)
-          print(f"Configured {gradle} for targetSdk 36 and upload-key signing.")
+
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          if not manifest.exists():
+              raise SystemExit("AndroidManifest.xml was not generated.")
+          manifest_text = manifest.read_text()
+          manifest_text, count = re.subn(r'android:label="[^"]+"', 'android:label="NOVA PLAY"', manifest_text, count=1)
+          if count != 1:
+              raise SystemExit("Could not set the Android launcher label.")
+          manifest.write_text(manifest_text)
+
+          print(f"Configured {gradle} for targetSdk 36, upload-key signing, and NOVA PLAY launcher label.")
           PY
 
       - name: Build signed release APK
