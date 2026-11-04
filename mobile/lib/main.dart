@@ -63,13 +63,14 @@ SliverPadding(padding:const EdgeInsets.all(20),sliver:SliverGrid(delegate:Sliver
 ]))])));
 }
 class PlayPage extends StatefulWidget{final Game game;final String lang;final VoidCallback onScore;const PlayPage({super.key,required this.game,required this.lang,required this.onScore});@override State<PlayPage> createState()=>_PlayState();}
-class _PlayState extends State<PlayPage>{final rng=Random();List<String> board=List.filled(9,'');List<int> cards=[];Set<int> open={},matched={};int moves=0,taps=0,seconds=10,q=0,points=0,memoryTurn=0,stage=1,coins=0;String? selectedAnswer;bool started=false,finished=false,answered=false,stageAwarded=false;Timer? quickTimer;
+class _PlayState extends State<PlayPage> with WidgetsBindingObserver{final rng=Random();List<String> board=List.filled(9,'');List<int> cards=[];Set<int> open={},matched={};int moves=0,taps=0,seconds=10,q=0,points=0,memoryTurn=0,stage=1,coins=0;String? selectedAnswer;bool started=false,finished=false,answered=false,stageAwarded=false;Timer? quickTimer;
 List<(String,String,List<String>)> get qs {
 if(widget.lang=='fr') return [('Quelle est la plus grande planète ?','Jupiter',['Terre','Mars','Jupiter']),('Combien de couleurs dans l’arc-en-ciel ?','7',['5','7','9']),('Quelle est la capitale du Maroc ?','Rabat',['Fès','Rabat','Tanger']),('Quel animal est le vaisseau du désert ?','Le chameau',['Le chameau','Le cheval','L’éléphant']),('8 × 7 = ?','56',['54','56','64'])];
 if(widget.lang=='en') return [('What is the largest planet?','Jupiter',['Earth','Mars','Jupiter']),('How many colors are in a rainbow?','7',['5','7','9']),('What is the capital of Morocco?','Rabat',['Fez','Rabat','Tangier']),('Which animal is the ship of the desert?','Camel',['Camel','Horse','Elephant']),('8 × 7 = ?','56',['54','56','64'])];
 return [('ما أكبر كوكب؟','المشتري',['الأرض','المريخ','المشتري']),('كم لوناً في قوس قزح؟','7',['5','7','9']),('ما عاصمة المغرب؟','الرباط',['فاس','الرباط','طنجة']),('سفينة الصحراء؟','الجمل',['الجمل','الحصان','الفيل']),('8 × 7 = ؟','56',['54','56','64'])];
 }
-@override void initState(){super.initState();shuffle();loadProgress();}
+@override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);shuffle();loadProgress();}
+@override void didChangeAppLifecycleState(AppLifecycleState state){if(state!=AppLifecycleState.resumed&&widget.game.id=='quick'&&started&&!finished){quickTimer?.cancel();quickTimer=null;if(mounted)setState(()=>started=false);}}
 Future<void> loadProgress()async{final p=await SharedPreferences.getInstance();if(!mounted)return;setState((){stage=p.getInt('stage_${widget.game.id}')??1;coins=p.getInt('nova_coins')??0;});}
 Future<void> completeStage(int stars) async {
   if (stageAwarded) return;
@@ -204,7 +205,7 @@ void showStages() {
     ),
   );
 }
-@override void dispose(){quickTimer?.cancel();super.dispose();}void shuffle(){cards=[0,1,2,3,4,5,0,1,2,3,4,5]..shuffle(rng);}Future<void> save(int n)async{final p=await SharedPreferences.getInstance();final gameKey='best_${widget.game.id}';if(n>(p.getInt(gameKey)??0))await p.setInt(gameKey,n);if(n>(p.getInt('best')??0))await p.setInt('best',n);widget.onScore();}
+@override void dispose(){WidgetsBinding.instance.removeObserver(this);quickTimer?.cancel();super.dispose();}void shuffle(){cards=[0,1,2,3,4,5,0,1,2,3,4,5]..shuffle(rng);}Future<void> save(int n)async{final p=await SharedPreferences.getInstance();final gameKey='best_${widget.game.id}';if(n>(p.getInt(gameKey)??0))await p.setInt(gameKey,n);if(n>(p.getInt('best')??0))await p.setInt('best',n);widget.onScore();}
 void reset(){quickTimer?.cancel();memoryTurn++;setState((){board=List.filled(9,'');open={};matched={};moves=0;shuffle();taps=0;seconds=10;started=false;finished=false;q=0;points=0;answered=false;selectedAnswer=null;stageAwarded=false;});}
 String? _winnerFor(List<String> cells){const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];for(final a in lines){if(cells[a[0]].isNotEmpty&&cells[a[0]]==cells[a[1]]&&cells[a[1]]==cells[a[2]])return cells[a[0]];}return cells.every((e)=>e.isNotEmpty)?'D':null;}
 String? winner()=>_winnerFor(board);
