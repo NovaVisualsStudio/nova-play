@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nova_play/main.dart';
+import 'package:nova_play/game_artwork.dart';
 import 'package:nova_play/snake_game.dart';
 import 'package:nova_play/chess_game.dart';
 import 'package:nova_play/pacman_game.dart';
@@ -22,6 +23,14 @@ Future<void> openGame(
   await tester.ensureVisible(game);
   await tester.tap(game);
   await tester.pumpAndSettle();
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
 
   testWidgets('home refreshes the global best score after returning from Snake', (tester) async {
     configurePhoneViewport(tester);
@@ -84,15 +93,6 @@ Future<void> openGame(
     expect(preferences.getInt('stage_xo'), isNull);
     expect(preferences.getInt('nova_coins') ?? 0, 0);
     expect(tester.takeException(), isNull);
-  });
-
-}
-
-void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
   });
 
   testWidgets('home screen renders the NOVA PLAY arcade', (tester) async {
@@ -540,21 +540,38 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('every home game card uses its own dedicated 3D artwork', (tester) async {
+  testWidgets('all eight games render their own cover and compact artwork from the atlas', (tester) async {
     configurePhoneViewport(tester);
+    const ids = ['xo','memory','quick','quiz','snake','chess','pacman','sonic'];
     await tester.pumpWidget(MaterialApp(
-      home: Wrap(children: [
-        for (final id in ['xo','memory','quick','quiz','snake','chess','pacman','sonic'])
-          SizedBox(width: 52, height: 52, child: GameArtwork(gameId: id)),
-      ]),
+      home: Scaffold(
+        body: GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          children: [
+            for (final id in ids)
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GameCover(gameId: id),
+                    const SizedBox(height: 6),
+                    GameArtwork(gameId: id),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
     ));
     await tester.pumpAndSettle();
 
-    final artwork = find.byType(GameArtwork);
-    expect(artwork, findsNWidgets(8));
-    final ids = tester.widgetList<GameArtwork>(artwork)
-        .map((widget) => widget.gameId).toSet();
-    expect(ids.length, 8);
+    expect(find.byType(GameCover), findsNWidgets(8));
+    expect(find.byType(GameArtwork), findsNWidgets(8));
+    expect(find.byType(Image), findsNWidgets(16));
+    final covers = tester.widgetList<GameCover>(find.byType(GameCover));
+    expect(covers.map((cover) => cover.gameId).toSet().length, 8);
     expect(tester.takeException(), isNull);
   });
 
