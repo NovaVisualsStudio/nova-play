@@ -119,7 +119,7 @@ class _PacManGamePageState extends State<PacManGamePage> {
       ..addAll([
         _Ghost(_ghostStart, const Color(0xFFFF526B), 0),
         _Ghost(_ghostStart - 1, const Color(0xFFFF9BE7), 3),
-        _Ghost(_ghostStart + 1, const Color(0xFF36D8E8), 6),
+        _Ghost(_ghostStart + 2, const Color(0xFF36D8E8), 6),
         _Ghost(_ghostStart + _w, const Color(0xFFFFA43A), 9),
       ]);
     _tick = 0;
@@ -261,7 +261,7 @@ class _PacManGamePageState extends State<PacManGamePage> {
           _direction = _Move.left;
           _queued = null;
           for (var i = 0; i < _ghosts.length; i++) {
-            _ghosts[i].cell = _ghostStart + (i == 1 ? -1 : i == 2 ? 1 : i == 3 ? _w : 0);
+            _ghosts[i].cell = _ghostStart + (i == 1 ? -1 : i == 2 ? 2 : i == 3 ? _w : 0);
             _ghosts[i].release = i * 3;
           }
         }
