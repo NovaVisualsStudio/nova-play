@@ -33,9 +33,52 @@ void showStages(){showDialog(context:context,builder:(ctx)=>StatefulBuilder(buil
 @override void dispose(){quickTimer?.cancel();super.dispose();}void shuffle(){cards=[0,1,2,3,4,5,0,1,2,3,4,5]..shuffle(rng);}Future<void> save(int n)async{final p=await SharedPreferences.getInstance();final gameKey='best_${widget.game.id}';if(n>(p.getInt(gameKey)??0))await p.setInt(gameKey,n);if(n>(p.getInt('best')??0))await p.setInt('best',n);widget.onScore();}
 void reset(){quickTimer?.cancel();memoryTurn++;setState((){board=List.filled(9,'');open={};matched={};moves=0;shuffle();taps=0;seconds=10;started=false;finished=false;q=0;points=0;answered=false;selectedAnswer=null;});}
 String? winner(){const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];for(final a in lines){if(board[a[0]].isNotEmpty&&board[a[0]]==board[a[1]]&&board[a[1]]==board[a[2]])return board[a[0]];}return board.every((e)=>e.isNotEmpty)?'D':null;}
-@override Widget build(BuildContext c) => Directionality(textDirection: widget.lang == 'ar' ? TextDirection.rtl : TextDirection.ltr, child: Scaffold(appBar: AppBar(title: Text(tr(widget.lang, widget.game.id)), leading: IconButton(onPressed: () => Navigator.pop(c), icon: const Icon(Icons.arrow_back)), actions: [IconButton(tooltip:'Stages & rewards',onPressed:showStages,icon:const Icon(Icons.emoji_events_rounded,color:Color(0xFFFFC857))),IconButton(onPressed: reset, icon: const Icon(Icons.refresh))]), body: SafeArea(child: Padding(padding: const EdgeInsets.all(20), child: Column(children:[Container(width:double.infinity,padding:const EdgeInsets.symmetric(horizontal:15,vertical:10),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF30245F),Color(0xFF142D4B)]),borderRadius:BorderRadius.circular(14),border:Border.all(color:purple.withOpacity(.35))),child:Row(children:[const Icon(Icons.military_tech_rounded,color:Color(0xFFFFC857)),const SizedBox(width:8),Expanded(child:Text(widget.lang=='ar'?'المرحلة $stage من 10':widget.lang=='fr'?'Niveau $stage sur 10':'Stage $stage of 10',style:const TextStyle(fontWeight:FontWeight.bold))),Text('🪙 $coins',style:const TextStyle(color:Color(0xFFFFC857),fontWeight:FontWeight.bold))])),const SizedBox(height:12),Expanded(child:Center(child:body()))])))));
+@override
+Widget build(BuildContext c) {
+  return Directionality(
+    textDirection: widget.lang == 'ar' ? TextDirection.rtl : TextDirection.ltr,
+    child: Scaffold(
+      appBar: AppBar(
+        title: Text(tr(widget.lang, widget.game.id)),
+        leading: IconButton(onPressed: () => Navigator.pop(c), icon: const Icon(Icons.arrow_back)),
+        actions: [
+          IconButton(tooltip: 'Stages & rewards', onPressed: showStages, icon: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFC857))),
+          IconButton(onPressed: reset, icon: const Icon(Icons.refresh)),
+        ],
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF30245F), Color(0xFF142D4B)]),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: purple.withOpacity(.35)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.military_tech_rounded, color: Color(0xFFFFC857)),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(widget.lang == 'ar' ? 'المرحلة $stage من 10' : widget.lang == 'fr' ? 'Niveau $stage sur 10' : 'Stage $stage of 10', style: const TextStyle(fontWeight: FontWeight.bold))),
+                    Text('🪙 $coins', style: const TextStyle(color: Color(0xFFFFC857), fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(child: Center(child: body())),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
 Widget body(){switch(widget.game.id){case'xo':return xo();case'memory':return memory();case'quick':return quick();default:return quiz();}}
-Widget xo(){final w=winner();return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(w==null?'X     O':w=='D'?tr(widget.lang,'draw'):tr(widget.lang,'win'),style:const TextStyle(fontSize:21,fontWeight:FontWeight.bold)),const SizedBox(height:20),AspectRatio(aspectRatio:1,child:GridView.builder(physics:const NeverScrollableScrollPhysics(),itemCount:9,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:9,mainAxisSpacing:9),itemBuilder:(c,i)=>GestureDetector(onTap:()=>move(i),child:AnimatedContainer(duration:const Duration(milliseconds:260),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:board[i].isEmpty?[const Color(0xFF273454),panel]:[board[i]=='X'?purple:cyan,board[i]=='X'?const Color(0xFF49328F):const Color(0xFF126A79)]),borderRadius:BorderRadius.circular(17),border:Border.all(color:(board[i]=='X'?purple:cyan).withOpacity(.45)),boxShadow:[BoxShadow(color:(board[i]=='X'?purple:cyan).withOpacity(board[i].isEmpty?.08:.32),blurRadius:board[i].isEmpty?5:18,offset:const Offset(0,7))]),child:Center(child:AnimatedSwitcher(duration:const Duration(milliseconds:280),transitionBuilder:(child,animation)=>ScaleTransition(scale:CurvedAnimation(parent:animation,curve:Curves.elasticOut),child:child),child:Text(board[i],key:ValueKey(board[i]),style:const TextStyle(fontSize:42,fontWeight:FontWeight.w900,color:Colors.white)))))))),if(w!=null)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);}
+Widget xo(){final w=winner();return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(w==null?'X     O':w=='D'?tr(widget.lang,'draw'):tr(widget.lang,'win'),style:const TextStyle(fontSize:21,fontWeight:FontWeight.bold)),const SizedBox(height:20),AspectRatio(aspectRatio:1,child:GridView.builder(physics:const NeverScrollableScrollPhysics(),itemCount:9,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:9,mainAxisSpacing:9),itemBuilder:(c,i)=>GestureDetector(onTap:()=>move(i),child:AnimatedContainer(duration:const Duration(milliseconds:260),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:board[i].isEmpty?[const Color(0xFF273454),panel]:[board[i]=='X'?purple:cyan,board[i]=='X'?const Color(0xFF49328F):const Color(0xFF126A79)]),borderRadius:BorderRadius.circular(17),border:Border.all(color:(board[i]=='X'?purple:cyan).withOpacity(.45)),boxShadow:[BoxShadow(color:(board[i]=='X'?purple:cyan).withOpacity(board[i].isEmpty ? .08 : .32),blurRadius:board[i].isEmpty?5:18,offset:const Offset(0,7))]),child:Center(child:AnimatedSwitcher(duration:const Duration(milliseconds:280),transitionBuilder:(child,animation)=>ScaleTransition(scale:CurvedAnimation(parent:animation,curve:Curves.elasticOut),child:child),child:Text(board[i],key:ValueKey(board[i]),style:const TextStyle(fontSize:42,fontWeight:FontWeight.w900,color:Colors.white)))))))),if(w!=null)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);}
 void move(int i){if(board[i].isNotEmpty||winner()!=null)return;setState(()=>board[i]='X');if(winner()!=null){save(winner()=='X'?10:5);if(winner()=='X')completeStage(3);else completeStage(1);return;}final e=List.generate(9,(j)=>j).where((j)=>board[j].isEmpty).toList();if(e.isNotEmpty){setState(()=>board[e[rng.nextInt(e.length)]]='O');if(winner()!=null){save(winner()=='O'?0:5);completeStage(winner()=='O'?0:1);}}}
 Widget memory() {
   return Column(
