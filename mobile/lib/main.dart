@@ -68,7 +68,99 @@ Future<void> completeStage(int stars) async {
     ),
   );
 }
-void showStages(){showDialog(context:context,builder:(ctx)=>StatefulBuilder(builder:(ctx,refresh)=>AlertDialog(backgroundColor:panel,title:Text(widget.lang=='ar'?'المراحل والمكافآت':widget.lang=='fr'?'Niveaux et récompenses':'Stages & rewards'),content:SizedBox(width:300,child:Column(mainAxisSize:MainAxisSize.min,children:[Text(widget.lang=='ar'?'المرحلة المفتوحة: $stage / 10':widget.lang=='fr'?'Niveau débloqué : $stage / 10':'Unlocked stage: $stage / 10'),Text('🪙 $coins',style:const TextStyle(color:Color(0xFFFFC857),fontWeight:FontWeight.bold)),const SizedBox(height:12),Wrap(spacing:8,runSpacing:8,children:List.generate(10,(i){final n=i+1;final unlocked=n<=stage;return InkWell(onTap:unlocked?(){setState(()=>stage=n);Navigator.pop(ctx);}:null,child:Container(width:48,height:54,decoration:BoxDecoration(gradient:unlocked?const LinearGradient(colors:[purple,Color(0xFF30245F)]):null,color:unlocked?null:bg,borderRadius:BorderRadius.circular(12),border:Border.all(color:unlocked?cyan:Colors.white24)),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(unlocked?Icons.lock_open_rounded:Icons.lock_rounded,size:15),Text('$n',style:const TextStyle(fontWeight:FontWeight.bold))])));})),const SizedBox(height:12),Text(widget.lang=='ar'?'كل مرحلة تمنحك عملات ونجوماً عند الفوز.':widget.lang=='fr'?'Gagnez des pièces et des étoiles à chaque victoire.':'Win to earn coins and stars at every stage.',textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,fontSize:12))])),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:Text(widget.lang=='ar'?'إغلاق':widget.lang=='fr'?'Fermer':'Close'))]));}
+void showStages() {
+  showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: panel,
+      title: Text(widget.lang == 'ar'
+          ? 'المراحل والمكافآت'
+          : widget.lang == 'fr'
+              ? 'Niveaux et récompenses'
+              : 'Stages & rewards'),
+      content: SizedBox(
+        width: 300,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(widget.lang == 'ar'
+                ? 'المرحلة المفتوحة: $stage / 10'
+                : widget.lang == 'fr'
+                    ? 'Niveau débloqué : $stage / 10'
+                    : 'Unlocked stage: $stage / 10'),
+            Text('🪙 $coins',
+                style: const TextStyle(
+                    color: Color(0xFFFFC857), fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: List.generate(10, (index) {
+                final level = index + 1;
+                final unlocked = level <= stage;
+                return InkWell(
+                  onTap: unlocked
+                      ? () {
+                          setState(() => stage = level);
+                          Navigator.pop(dialogContext);
+                        }
+                      : null,
+                  child: Container(
+                    width: 48,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: unlocked
+                          ? const LinearGradient(
+                              colors: [purple, Color(0xFF30245F)])
+                          : null,
+                      color: unlocked ? null : bg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: unlocked ? cyan : Colors.white24),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                            unlocked
+                                ? Icons.lock_open_rounded
+                                : Icons.lock_rounded,
+                            size: 15),
+                        Text('$level',
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              widget.lang == 'ar'
+                  ? 'كل مرحلة تمنحك عملات ونجوماً عند الفوز.'
+                  : widget.lang == 'fr'
+                      ? 'Gagnez des pièces et des étoiles à chaque victoire.'
+                      : 'Win to earn coins and stars at every stage.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext),
+          child: Text(widget.lang == 'ar'
+              ? 'إغلاق'
+              : widget.lang == 'fr'
+                  ? 'Fermer'
+                  : 'Close'),
+        ),
+      ],
+    ),
+  );
+}
 @override void dispose(){quickTimer?.cancel();super.dispose();}void shuffle(){cards=[0,1,2,3,4,5,0,1,2,3,4,5]..shuffle(rng);}Future<void> save(int n)async{final p=await SharedPreferences.getInstance();final gameKey='best_${widget.game.id}';if(n>(p.getInt(gameKey)??0))await p.setInt(gameKey,n);if(n>(p.getInt('best')??0))await p.setInt('best',n);widget.onScore();}
 void reset(){quickTimer?.cancel();memoryTurn++;setState((){board=List.filled(9,'');open={};matched={};moves=0;shuffle();taps=0;seconds=10;started=false;finished=false;q=0;points=0;answered=false;selectedAnswer=null;});}
 String? winner(){const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];for(final a in lines){if(board[a[0]].isNotEmpty&&board[a[0]]==board[a[1]]&&board[a[1]]==board[a[2]])return board[a[0]];}return board.every((e)=>e.isNotEmpty)?'D':null;}
