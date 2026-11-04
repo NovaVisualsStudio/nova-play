@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nova_play/main.dart';
 import 'package:nova_play/snake_game.dart';
+import 'package:nova_play/chess_game.dart';
 
 void configurePhoneViewport(WidgetTester tester) {
   tester.view.physicalSize = const Size(393, 873);
@@ -270,4 +271,15 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+
+  testWidgets('chess opens with a complete board and AI difficulty selector', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: ChessGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+    expect(find.text('الشطرنج'), findsOneWidget);
+    expect(find.text('دورك — الأبيض'), findsOneWidget);
+    expect(find.byType(GridView), findsOneWidget);
+    expect(find.text('متوسط'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
