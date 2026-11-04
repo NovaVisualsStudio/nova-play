@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'game_artwork.dart';
 
 class SonicRunnerPage extends StatefulWidget {
@@ -96,8 +97,8 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> with WidgetsBindingOb
     if(x>=worldWidth-100){complete=true;score+=rings*100;_pause();}
     camera=(x-130).clamp(0,worldWidth-360).toDouble();if(mounted)setState((){});jumping=false;
   }
-  void _dash(){if(paused||dead||complete||dashCooldown>0)return;setState((){final direction=right?1.0:left?-1.0:(vx<0?-1.0:1.0);vx=direction*780;vy=0;dashTimer=.24;dashCooldown=1.35;invulnerable=.28;score+=5;});}
-  void _hold(String a,bool v){setState((){if(a=='left')left=v;if(a=='right')right=v;if(a=='jump'){jumping=v;if(v)jumpBuffer=.13;}if(a=='roll')rolling=v;});}
+  void _dash(){if(paused||dead||complete||dashCooldown>0)return;HapticFeedback.mediumImpact();setState((){final direction=right?1.0:left?-1.0:(vx<0?-1.0:1.0);vx=direction*780;vy=0;dashTimer=.24;dashCooldown=1.35;invulnerable=.28;score+=5;});}
+  void _hold(String a,bool v){if(a=='jump'&&v)HapticFeedback.selectionClick();setState((){if(a=='left')left=v;if(a=='right')right=v;if(a=='jump'){jumping=v;if(v)jumpBuffer=.13;}if(a=='roll')rolling=v;});}
   void _resetAndPause(){_pause();setState(_reset);}
   @override void dispose(){WidgetsBinding.instance.removeObserver(this);_timer?.cancel();super.dispose();}
 
