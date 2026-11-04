@@ -147,7 +147,7 @@ void main() {
 
     final cards = find.descendant(
       of: find.byType(GridView),
-      matching: find.byType(InkWell),
+      matching: find.byType(GestureDetector),
     );
     expect(cards, findsNWidgets(12));
 
@@ -192,7 +192,7 @@ void main() {
 
     final cells = find.descendant(
       of: find.byType(GridView),
-      matching: find.byType(InkWell),
+      matching: find.byType(GestureDetector),
     );
     await tester.tap(cells.at(0));
     await tester.pumpAndSettle();
@@ -215,7 +215,7 @@ void main() {
 
     final cards = find.descendant(
       of: find.byType(GridView),
-      matching: find.byType(InkWell),
+      matching: find.byType(GestureDetector),
     );
     final positions = <String, List<int>>{};
 
@@ -242,10 +242,15 @@ void main() {
     }
 
     expect(find.text('الأزواج: 6 / 6'), findsOneWidget);
+    expect(find.text('مرحلة مكتملة!'), findsOneWidget);
+    await tester.tap(find.text('متابعة'));
+    await tester.pumpAndSettle();
     expect(find.text('العب مجدداً'), findsOneWidget);
 
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getInt('best_memory'), greaterThan(0));
+    expect(preferences.getInt('stage_memory'), 2);
+    expect(preferences.getInt('nova_coins'), greaterThan(0));
     expect(tester.takeException(), isNull);
   });
 
