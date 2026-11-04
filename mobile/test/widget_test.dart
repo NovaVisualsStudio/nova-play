@@ -44,16 +44,15 @@ Future<void> openGame(
     await tester.pumpWidget(MaterialApp(
       home: Wrap(children: [
         for (final id in ['xo','memory','quick','quiz','snake','chess','pacman','sonic'])
-          SizedBox(width: 48, height: 48, child: CustomPaint(painter: ArcadeGameGlyph(id))),
+          SizedBox(width: 52, height: 52, child: GameArtwork(gameId: id)),
       ]),
     ));
     await tester.pumpAndSettle();
 
-    final glyphs = find.byWidgetPredicate((widget) =>
-        widget is CustomPaint && widget.painter is ArcadeGameGlyph);
-    expect(glyphs, findsNWidgets(8));
-    final ids = tester.widgetList<CustomPaint>(glyphs)
-        .map((widget) => (widget.painter as ArcadeGameGlyph).id).toSet();
+    final artwork = find.byType(GameArtwork);
+    expect(artwork, findsNWidgets(8));
+    final ids = tester.widgetList<GameArtwork>(artwork)
+        .map((widget) => widget.gameId).toSet();
     expect(ids.length, 8);
     expect(tester.takeException(), isNull);
   });
