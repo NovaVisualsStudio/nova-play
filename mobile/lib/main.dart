@@ -6,11 +6,50 @@ import 'snake_game.dart';
 import 'chess_game.dart';
 import 'pacman_game.dart';
 import 'sonic_runner_game.dart';
+import 'game_artwork.dart';
 
 void main()=>runApp(const NovaPlay());
 const bg=Color(0xFF090D1B),panel=Color(0xFF151C31),purple=Color(0xFF8B6CFF),cyan=Color(0xFF36D8E8);
 class NovaPlay extends StatefulWidget{const NovaPlay({super.key});@override State<NovaPlay> createState()=>_AppState();}
-class _AppState extends State<NovaPlay>{String lang='ar';@override Widget build(BuildContext c)=>MaterialApp(debugShowCheckedModeBanner:false,title:'NOVA PLAY',theme:ThemeData(brightness:Brightness.dark,scaffoldBackgroundColor:bg,colorScheme:ColorScheme.fromSeed(seedColor:purple,brightness:Brightness.dark),useMaterial3:true),home:Home(lang:lang,onLang:(v)=>setState(()=>lang=v)));}
+class _AppState extends State<NovaPlay>{String lang='ar';@override Widget build(BuildContext c)=>MaterialApp(debugShowCheckedModeBanner:false,title:'NOVA PLAY',theme:ThemeData(
+  brightness:Brightness.dark,
+  scaffoldBackgroundColor:bg,
+  colorScheme:ColorScheme.fromSeed(seedColor:purple,brightness:Brightness.dark),
+  useMaterial3:true,
+  appBarTheme:const AppBarTheme(
+    backgroundColor:bg,
+    foregroundColor:Colors.white,
+    surfaceTintColor:Colors.transparent,
+    elevation:0,
+  ),
+  filledButtonTheme:FilledButtonThemeData(
+    style:FilledButton.styleFrom(
+      minimumSize:const Size(48,48),
+      padding:const EdgeInsets.symmetric(horizontal:18,vertical:12),
+      backgroundColor:purple,
+      foregroundColor:Colors.white,
+      textStyle:const TextStyle(fontWeight:FontWeight.w800),
+      shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)),
+      elevation:2,
+    ),
+  ),
+  outlinedButtonTheme:OutlinedButtonThemeData(
+    style:OutlinedButton.styleFrom(
+      minimumSize:const Size(48,48),
+      foregroundColor:Colors.white,
+      side:const BorderSide(color:Color(0x668B6CFF)),
+      textStyle:const TextStyle(fontWeight:FontWeight.w700),
+      shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14)),
+    ),
+  ),
+  iconButtonTheme:IconButtonThemeData(
+    style:IconButton.styleFrom(
+      foregroundColor:Colors.white,
+      backgroundColor:const Color(0xFF151C31),
+      shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(13)),
+    ),
+  ),
+),home:Home(lang:lang,onLang:(v)=>setState(()=>lang=v)));}
 String tr(String l,String k){const d={'ar':{'tag':'ألعابك المفضلة في مكان واحد','choose':'اختر لعبتك','play':'العب الآن','best':'أفضل نتيجة','xo':'تحدي إكس أو','memory':'اختبار الذاكرة','quick':'سرعة الاستجابة','quiz':'اختبر معلوماتك','back':'رجوع','again':'العب مجدداً','win':'أحسنت!','draw':'تعادل!','tap':'اضغط بأسرع ما يمكنك','start':'ابدأ','done':'انتهى التحدي','next':'التالي','question':'السؤال','pairs':'الأزواج','snake':'لعبة الأفعى','chess':'الشطرنج','pacman':'باك مان','sonic':'عدّاء السرعة'},'fr':{'tag':'Vos mini-jeux au même endroit','choose':'Choisissez un jeu','play':'Jouer','best':'Meilleur score','xo':'Morpion','memory':'Mémoire','quick':'Réflexes','quiz':'Quiz','back':'Retour','again':'Rejouer','win':'Bravo !','draw':'Égalité !','tap':'Tapez vite','start':'Démarrer','done':'Terminé','next':'Suivant','question':'Question','pairs':'Paires','snake':'Serpent','chess':'Échecs','pacman':'Pac-Man','sonic':'Velocity Runner'},'en':{'tag':'Your mini games in one place','choose':'Choose a game','play':'Play now','best':'Best score','xo':'Tic-tac-toe','memory':'Memory Match','quick':'Quick Tap','quiz':'Brain Quiz','back':'Back','again':'Play again','win':'Well done!','draw':'Draw!','tap':'Tap as fast as you can','start':'Start','done':'Challenge complete','next':'Next','question':'Question','pairs':'Pairs','snake':'Snake','chess':'Chess','pacman':'Pac-Man','sonic':'Velocity Runner'}};return d[l]?[k] ?? d['en']?[k] ?? k;}
 class Game{final String id;final IconData icon;final Color color;const Game(this.id,this.icon,this.color);}
 const games=[Game('xo',Icons.grid_3x3_rounded,purple),Game('memory',Icons.extension_rounded,cyan),Game('quick',Icons.bolt_rounded,Color(0xFFFFA43A)),Game('quiz',Icons.quiz_rounded,Color(0xFFFF648D)),Game('snake',Icons.pets_rounded,Color(0xFF4DDB85)),Game('chess',Icons.grid_4x4_rounded,Color(0xFFE8DCC5)),Game('pacman',Icons.sports_esports_rounded,Color(0xFFFFD84D)),Game('sonic',Icons.speed_rounded,Color(0xFF28B9F2))];
@@ -20,7 +59,7 @@ class _HomeState extends State<Home>{int best=0;@override void initState(){super
 SliverPadding(padding:const EdgeInsets.all(20),sliver:SliverToBoxAdapter(child:Row(children:[Container(width:48,height:48,decoration:BoxDecoration(gradient:const LinearGradient(colors:[purple,cyan]),borderRadius:BorderRadius.circular(15)),child:const Icon(Icons.sports_esports_rounded)),const SizedBox(width:12),const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('NOVA PLAY',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900,letterSpacing:1.2)),Text('ARCADE • MINI GAMES',style:TextStyle(color:cyan,fontSize:9,letterSpacing:1.4))])),IconButton(tooltip:'Privacy policy',onPressed:()=>showDialog(context:c,builder:(_)=>PrivacyInfo(lang:widget.lang)),icon:const Icon(Icons.privacy_tip_outlined,color:cyan)),PopupMenuButton<String>(onSelected:widget.onLang,itemBuilder:(_)=>const [PopupMenuItem(value:'ar',child:Text('العربية')),PopupMenuItem(value:'fr',child:Text('Français')),PopupMenuItem(value:'en',child:Text('English'))],child:const Icon(Icons.translate,color:cyan))]))),
 SliverPadding(padding:const EdgeInsets.fromLTRB(20,0,20,22),sliver:SliverToBoxAdapter(child:Container(padding:const EdgeInsets.all(22),decoration:BoxDecoration(gradient:const LinearGradient(colors:[Color(0xFF30245F),Color(0xFF142D4B)]),borderRadius:BorderRadius.circular(25)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(tr(widget.lang,'tag'),style:const TextStyle(color:Colors.white70)),const SizedBox(height:10),const Text('PLAY. CHALLENGE.\nREPEAT.',style:TextStyle(fontSize:27,fontWeight:FontWeight.w900,height:1.05)),const SizedBox(height:16),Row(children:[const Icon(Icons.emoji_events,color:Color(0xFFFFC857)),const SizedBox(width:8),Text(tr(widget.lang,'best')+': '+best.toString(),style:const TextStyle(fontWeight:FontWeight.bold))])])))),
 SliverPadding(padding:const EdgeInsets.symmetric(horizontal:20),sliver:SliverToBoxAdapter(child:Text(tr(widget.lang,'choose'),style:const TextStyle(fontSize:19,fontWeight:FontWeight.w800)))),
-SliverPadding(padding:const EdgeInsets.all(20),sliver:SliverGrid(delegate:SliverChildBuilderDelegate((c,i){final g=games[i];return GameCard3D(game:g,title:tr(widget.lang,g.id),playLabel:tr(widget.lang,'play'),onTap:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>g.id=='snake'?SnakeGamePage(lang:widget.lang):g.id=='chess'?ChessGamePage(lang:widget.lang):g.id=='pacman'?PacManGamePage(lang:widget.lang):g.id=='sonic'?SonicRunnerPage(lang:widget.lang):PlayPage(game:g,lang:widget.lang,onScore:load))).then((_)=>load()));},childCount:games.length),gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:13,mainAxisSpacing:13,childAspectRatio:0.90)))
+SliverPadding(padding:const EdgeInsets.all(20),sliver:SliverGrid(delegate:SliverChildBuilderDelegate((c,i){final g=games[i];return GameCard3D(game:g,title:tr(widget.lang,g.id),playLabel:tr(widget.lang,'play'),onTap:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>g.id=='snake'?SnakeGamePage(lang:widget.lang):g.id=='chess'?ChessGamePage(lang:widget.lang):g.id=='pacman'?PacManGamePage(lang:widget.lang):g.id=='sonic'?SonicRunnerPage(lang:widget.lang):PlayPage(game:g,lang:widget.lang,onScore:load))).then((_)=>load()));},childCount:games.length),gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:13,mainAxisSpacing:13,childAspectRatio:0.80)))
 ]))])));
 }
 class PlayPage extends StatefulWidget{final Game game;final String lang;final VoidCallback onScore;const PlayPage({super.key,required this.game,required this.lang,required this.onScore});@override State<PlayPage> createState()=>_PlayState();}
@@ -293,44 +332,137 @@ Widget quiz(){if(q>=qs.length)return Column(mainAxisAlignment:MainAxisAlignment.
 
 
 class GameCard3D extends StatefulWidget {
- final Game game; final String title; final String playLabel; final VoidCallback onTap;
- const GameCard3D({super.key,required this.game,required this.title,required this.playLabel,required this.onTap});
- @override State<GameCard3D> createState()=>_GameCard3DState();
-}
-class _GameCard3DState extends State<GameCard3D> with SingleTickerProviderStateMixin {
- late final AnimationController controller=AnimationController(vsync:this,duration:const Duration(milliseconds:850))..forward();
- @override void dispose(){controller.dispose();super.dispose();}
- @override Widget build(BuildContext context)=>AnimatedBuilder(animation:controller,builder:(context,child){final t=Curves.easeOutBack.transform(controller.value);return Transform(alignment:Alignment.center,transform:Matrix4.identity()..setEntry(3,2,.0012)..rotateX((1-t)*.16)..translate(0.0,(1-t)*22),child:Opacity(opacity:controller.value.clamp(0.0,1.0).toDouble(),child:Transform.scale(scale:.88+.12*t,child:child)));},child:Material(color:Colors.transparent,child:InkWell(borderRadius:BorderRadius.circular(23),onTap:widget.onTap,child:Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[widget.game.color.withOpacity(.25),panel,const Color(0xFF10182B)]),borderRadius:BorderRadius.circular(23),border:Border.all(color:widget.game.color.withOpacity(.55)),boxShadow:[BoxShadow(color:widget.game.color.withOpacity(.2),blurRadius:18,offset:const Offset(0,9)),const BoxShadow(color:Colors.black45,blurRadius:8,offset:Offset(0,5))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Transform.rotate(angle:-.08,child:Container(width:52,height:52,decoration:BoxDecoration(gradient:LinearGradient(colors:[widget.game.color,widget.game.color.withOpacity(.35)]),borderRadius:BorderRadius.circular(16),boxShadow:[BoxShadow(color:widget.game.color.withOpacity(.4),blurRadius:15,offset:const Offset(0,6))]),child:GameArtwork(gameId:widget.game.id))),Text(widget.title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900,fontSize:15,height:1.15)),Row(children:[Expanded(child:Text(widget.playLabel,maxLines:1,style:TextStyle(color:widget.game.color,fontWeight:FontWeight.bold,fontSize:11))),Icon(Icons.play_circle_fill_rounded,color:widget.game.color,size:23)])])))));
-}
+  final Game game;
+  final String title;
+  final String playLabel;
+  final VoidCallback onTap;
 
+  const GameCard3D({
+    super.key,
+    required this.game,
+    required this.title,
+    required this.playLabel,
+    required this.onTap,
+  });
 
-class GameArtwork extends StatelessWidget {
-  final String gameId;
-  const GameArtwork({super.key, required this.gameId});
-  static const gameIds=['xo','memory','quick','quiz','snake','chess','pacman','sonic'];
   @override
-  Widget build(BuildContext context) {
-    final index=gameIds.indexOf(gameId);
-    if(index<0) return const Icon(Icons.videogame_asset_rounded,color:Colors.white,size:29);
-    final column=index%4, row=index~/4;
-    return ClipRRect(
-      borderRadius:BorderRadius.circular(11),
-      child:SizedBox(
-        width:52,height:52,
-        child:ClipRect(
-          child:Align(
-            alignment:Alignment(column*(2/3)-1,row==0?-1:1),
-            widthFactor:.25,heightFactor:.5,
-            child:Image.asset(
-              'assets/game_icons.webp',
-              width:208,height:104,fit:BoxFit.fill,
-              errorBuilder:(context,error,stack)=>const Icon(Icons.videogame_asset_rounded,color:Colors.white),
+  State<GameCard3D> createState() => _GameCard3DState();
+}
+
+class _GameCard3DState extends State<GameCard3D>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 650),
+  )..forward();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: controller,
+    builder: (context, child) {
+      final progress = Curves.easeOutCubic.transform(controller.value);
+      return Transform.translate(
+        offset: Offset(0, (1 - progress) * 12),
+        child: Opacity(opacity: progress, child: child),
+      );
+    },
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: widget.onTap,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                widget.game.color.withOpacity(.22),
+                panel,
+                const Color(0xFF10182B),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: widget.game.color.withOpacity(.5)),
+            boxShadow: [
+              BoxShadow(
+                color: widget.game.color.withOpacity(.15),
+                blurRadius: 16,
+                offset: const Offset(0, 7),
+              ),
+              const BoxShadow(
+                color: Colors.black38,
+                blurRadius: 7,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Hero(
+                    tag: 'nova-art-${widget.game.id}',
+                    child: GameCover(
+                      gameId: widget.game.id,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  widget.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.start,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    height: 1.15,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 35,
+                  child: FilledButton.icon(
+                    onPressed: widget.onTap,
+                    icon: const Icon(Icons.play_arrow_rounded, size: 19),
+                    label: Text(
+                      widget.playLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 35),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      backgroundColor: widget.game.color.withOpacity(.22),
+                      foregroundColor: widget.game.color,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: widget.game.color.withOpacity(.45),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
 class PrivacyInfo extends StatelessWidget {
