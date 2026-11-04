@@ -78,7 +78,7 @@ void main() {
       await tester.pump();
     }
     await tester.pumpAndSettle();
-    expect(find.text('انتهى التحدي'), findsOneWidget);
+    expect(find.text('العب مجدداً'), findsOneWidget);
   });
 
   testWidgets('quiz game displays its first question and answers', (tester) async {
