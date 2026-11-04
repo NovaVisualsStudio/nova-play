@@ -23,6 +23,44 @@ Future<void> openGame(
   await tester.tap(game);
   await tester.pumpAndSettle();
 
+  testWidgets('home refreshes the global best score after returning from Snake', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -700));
+    await tester.pumpAndSettle();
+    await openGame(tester, 'لعبة الأفعى');
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setInt('best', 123);
+    await tester.tap(find.byIcon(Icons.arrow_back));
+    await tester.pumpAndSettle();
+
+    expect(find.text('أفضل نتيجة: 123'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('chess new game cancels a pending computer reply', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: ChessGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+
+    final squares = find.descendant(
+      of: find.byType(GridView),
+      matching: find.byType(GestureDetector),
+    );
+    await tester.tap(squares.at(52));
+    await tester.pump();
+    await tester.tap(squares.at(36));
+    await tester.pump(const Duration(milliseconds: 20));
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('النقلات: 0'), findsOneWidget);
+    expect(find.text('دورك — الأبيض'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
 
 void main() {
