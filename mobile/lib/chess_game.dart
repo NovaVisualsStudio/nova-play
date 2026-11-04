@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'game_artwork.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chess_on_dart/chess_on_dart.dart' as chess;
@@ -66,6 +67,7 @@ class _ChessGamePageState extends State<ChessGamePage> {
   }
 
   void _makePlayerMove(chess.Move move) {
+    HapticFeedback.lightImpact();
     game.tryMove(move);
     history.add(move);
     setState(() { selected = null; });
