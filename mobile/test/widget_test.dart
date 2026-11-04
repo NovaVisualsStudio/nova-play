@@ -60,7 +60,7 @@ void main() {
     await openGame(tester, 'اختبار الذاكرة');
 
     expect(find.text('الأزواج: 0 / 6'), findsOneWidget);
-    expect(find.text('?'), findsNWidgets(12));
+    expect(find.text('✦'), findsNWidgets(12));
   });
 
   testWidgets('tic-tac-toe game opens with an empty board', (tester) async {
@@ -163,7 +163,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(milliseconds: 800));
 
-    expect(find.text('?'), findsNWidgets(12));
+    expect(find.text('✦'), findsNWidgets(12));
     expect(find.text('الأزواج: 0 / 6'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -225,12 +225,12 @@ void main() {
     // Reveal each card individually to discover the randomized board layout.
     for (var i = 0; i < 12; i++) {
       await tester.tap(cards.at(i));
-      await tester.pump();
+      await tester.pumpAndSettle();
       final labels = tester.widgetList<Text>(
         find.descendant(of: cards.at(i), matching: find.byType(Text)),
       );
       final emoji = labels.first.data!;
-      expect(emoji, isNot('?'));
+      expect(emoji, isNot('✦'));
       positions.putIfAbsent(emoji, () => <int>[]).add(i);
       await tester.pump(const Duration(milliseconds: 800));
     }
