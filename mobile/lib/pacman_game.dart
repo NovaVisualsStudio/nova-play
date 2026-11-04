@@ -417,3 +417,37 @@ class _PacManGamePageState extends State<PacManGamePage> {
                     const SizedBox(height: 4),
                     _arrow(Icons.arrow_downward, _Move.down),
                   ]),
+                ]),
+                const SizedBox(height: 8),
+                Wrap(spacing: 10, children: [
+                  FilledButton.icon(
+                    onPressed: _started ? _pause : _start,
+                    icon: Icon(_started ? Icons.pause : Icons.play_arrow),
+                    label: Text(_started
+                        ? _t('إيقاف مؤقت', 'Pause', 'Pause')
+                        : _t('ابدأ اللعب', 'Démarrer', 'Start')),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _reset,
+                    icon: const Icon(Icons.replay),
+                    label: Text(_t('إعادة', 'Réinitialiser', 'Reset')),
+                  ),
+                ]),
+                const SizedBox(height: 10),
+                Text(
+                  _t(
+                    'القواعد: اجمع النقاط الصغيرة (10) والكبيرة (50). تمنحك النقطة الكبيرة وقتاً مؤقتاً لالتهام الأشباح. اصطدامك بشبح عادي يفقدك حياة؛ لديك 3 أرواح. أكمل المتاهة للانتقال إلى مستوى أسرع.',
+                    'Règles : les petites pastilles valent 10 et les grandes 50. Une grande pastille rend les fantômes vulnérables pendant un temps limité. Un contact normal coûte une vie ; vous en avez 3. Terminez le labyrinthe pour passer au niveau suivant, plus rapide.',
+                    'Rules: small dots are worth 10 and power pellets 50. A power pellet lets you eat ghosts for a limited time. Touching a normal ghost costs one of your 3 lives. Clear the maze to advance to a faster level.',
+                  ),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white54, fontSize: 11, height: 1.35),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
