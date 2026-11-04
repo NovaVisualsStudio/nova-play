@@ -250,7 +250,7 @@ void main() {
 
     // The discovery taps above have already matched every pair. Do not tap
     // matched cards again: the completion dialog intentionally blocks input.
-    expect(find.text('الأزواج: 6 / 6'), findsOneWidget);
+    // The completion overlay intentionally replaces the in-game HUD.
     expect(find.text('مرحلة مكتملة!'), findsOneWidget);
     await tester.tap(find.text('متابعة'));
     await tester.pumpAndSettle();
@@ -449,6 +449,7 @@ void main() {
     expect(find.text('ابدأ اللعب'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
     expect(find.byIcon(Icons.arrow_forward), findsOneWidget);
+    expect(find.byIcon(Icons.bolt), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
