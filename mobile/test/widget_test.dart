@@ -206,4 +206,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+
+  testWidgets('memory game can complete all six pairs and persist its score', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'اختبار الذاكرة');
+
+    final cards = find.descendant(
+      of: find.byType(GridView),
+      matching: find.byType(InkWell),
+    );
+    final positions = <String, List<int>>{};
+
+    // Reveal each card individually to discover the randomized board layout.
+    for (var i = 0; i < 12; i++) {
+      await tester.tap(cards.at(i));
+      await tester.pump();
+      final labels = tester.widgetList<Text>(
+        find.descendant(of: cards.at(i), matching: find.byType(Text)),
+      );
+      final emoji = labels.first.data!;
+      expect(emoji, isNot('?'));
+      positions.putIfAbsent(emoji, () => <int>[]).add(i);
+      await tester.pump(const Duration(milliseconds: 800));
+    }
+
+    expect(positions.length, 6);
+    for (final pair in positions.values) {
+      expect(pair.length, 2);
+      await tester.tap(cards.at(pair[0]));
+      await tester.pump();
+      await tester.tap(cards.at(pair[1]));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('الأزواج: 6 / 6'), findsOneWidget);
+    expect(find.text('العب مجدداً'), findsOneWidget);
+
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getInt('best_memory'), greaterThan(0));
+    expect(tester.takeException(), isNull);
+  });
+
 }
