@@ -470,6 +470,20 @@ void main() {
   });
 
 
+  testWidgets('Velocity Runner Pulse Dash activates and awards its skill bonus', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'en')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Play'));
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.bolt));
+    await tester.pump(const Duration(milliseconds: 80));
+
+    expect(find.text('⭐ 5'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Velocity Runner advances through its high-speed course without exceptions', (tester) async {
     configurePhoneViewport(tester);
     await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'en')));
