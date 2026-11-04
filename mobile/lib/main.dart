@@ -297,67 +297,37 @@ class GameCard3D extends StatefulWidget {
 class _GameCard3DState extends State<GameCard3D> with SingleTickerProviderStateMixin {
  late final AnimationController controller=AnimationController(vsync:this,duration:const Duration(milliseconds:850))..forward();
  @override void dispose(){controller.dispose();super.dispose();}
- @override Widget build(BuildContext context)=>AnimatedBuilder(animation:controller,builder:(context,child){final t=Curves.easeOutBack.transform(controller.value);return Transform(alignment:Alignment.center,transform:Matrix4.identity()..setEntry(3,2,.0012)..rotateX((1-t)*.16)..translate(0.0,(1-t)*22),child:Opacity(opacity:controller.value.clamp(0.0,1.0).toDouble(),child:Transform.scale(scale:.88+.12*t,child:child)));},child:Material(color:Colors.transparent,child:InkWell(borderRadius:BorderRadius.circular(23),onTap:widget.onTap,child:Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[widget.game.color.withOpacity(.25),panel,const Color(0xFF10182B)]),borderRadius:BorderRadius.circular(23),border:Border.all(color:widget.game.color.withOpacity(.55)),boxShadow:[BoxShadow(color:widget.game.color.withOpacity(.2),blurRadius:18,offset:const Offset(0,9)),const BoxShadow(color:Colors.black45,blurRadius:8,offset:Offset(0,5))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Transform.rotate(angle:-.08,child:Container(width:52,height:52,decoration:BoxDecoration(gradient:LinearGradient(colors:[widget.game.color,widget.game.color.withOpacity(.35)]),borderRadius:BorderRadius.circular(16),boxShadow:[BoxShadow(color:widget.game.color.withOpacity(.4),blurRadius:15,offset:const Offset(0,6))]),child:CustomPaint(size:const Size(40,40),painter:ArcadeGameGlyph(widget.game.id)))),Text(widget.title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900,fontSize:15,height:1.15)),Row(children:[Expanded(child:Text(widget.playLabel,maxLines:1,style:TextStyle(color:widget.game.color,fontWeight:FontWeight.bold,fontSize:11))),Icon(Icons.play_circle_fill_rounded,color:widget.game.color,size:23)])])))));
+ @override Widget build(BuildContext context)=>AnimatedBuilder(animation:controller,builder:(context,child){final t=Curves.easeOutBack.transform(controller.value);return Transform(alignment:Alignment.center,transform:Matrix4.identity()..setEntry(3,2,.0012)..rotateX((1-t)*.16)..translate(0.0,(1-t)*22),child:Opacity(opacity:controller.value.clamp(0.0,1.0).toDouble(),child:Transform.scale(scale:.88+.12*t,child:child)));},child:Material(color:Colors.transparent,child:InkWell(borderRadius:BorderRadius.circular(23),onTap:widget.onTap,child:Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[widget.game.color.withOpacity(.25),panel,const Color(0xFF10182B)]),borderRadius:BorderRadius.circular(23),border:Border.all(color:widget.game.color.withOpacity(.55)),boxShadow:[BoxShadow(color:widget.game.color.withOpacity(.2),blurRadius:18,offset:const Offset(0,9)),const BoxShadow(color:Colors.black45,blurRadius:8,offset:Offset(0,5))]),child:Column(crossAxisAlignment:CrossAxisAlignment.start,mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Transform.rotate(angle:-.08,child:Container(width:52,height:52,decoration:BoxDecoration(gradient:LinearGradient(colors:[widget.game.color,widget.game.color.withOpacity(.35)]),borderRadius:BorderRadius.circular(16),boxShadow:[BoxShadow(color:widget.game.color.withOpacity(.4),blurRadius:15,offset:const Offset(0,6))]),child:GameArtwork(gameId:widget.game.id))),Text(widget.title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900,fontSize:15,height:1.15)),Row(children:[Expanded(child:Text(widget.playLabel,maxLines:1,style:TextStyle(color:widget.game.color,fontWeight:FontWeight.bold,fontSize:11))),Icon(Icons.play_circle_fill_rounded,color:widget.game.color,size:23)])])))));
 }
 
 
-class ArcadeGameGlyph extends CustomPainter {
-  final String id;
-  ArcadeGameGlyph(this.id);
+class GameArtwork extends StatelessWidget {
+  final String gameId;
+  const GameArtwork({super.key, required this.gameId});
+  static const gameIds=['xo','memory','quick','quiz','snake','chess','pacman','sonic'];
   @override
-  void paint(Canvas canvas, Size size) {
-    final w=size.width,h=size.height;
-    final p=Paint()..color=Colors.white..style=PaintingStyle.stroke..strokeWidth=3.2..strokeCap=StrokeCap.round..strokeJoin=StrokeJoin.round;
-    final fill=Paint()..color=Colors.white..style=PaintingStyle.fill;
-    final center=Offset(w/2,h/2);
-    switch(id) {
-      case 'xo':
-        canvas.drawLine(Offset(w*.22,h*.22),Offset(w*.78,h*.78),p);
-        canvas.drawLine(Offset(w*.78,h*.22),Offset(w*.22,h*.78),p);
-        canvas.drawCircle(center,8,p);
-        break;
-      case 'memory':
-        for(final r in [Rect.fromLTWH(w*.15,h*.15,w*.29,h*.29),Rect.fromLTWH(w*.56,h*.15,w*.29,h*.29),Rect.fromLTWH(w*.15,h*.56,w*.29,h*.29),Rect.fromLTWH(w*.56,h*.56,w*.29,h*.29)]) {
-          canvas.drawRRect(RRect.fromRectAndRadius(r,const Radius.circular(4)),p);
-        }
-        canvas.drawCircle(center,3,fill);
-        break;
-      case 'quick':
-        final bolt=Path()..moveTo(w*.56,h*.08)..lineTo(w*.28,h*.53)..lineTo(w*.49,h*.53)..lineTo(w*.39,h*.92)..lineTo(w*.75,h*.40)..lineTo(w*.54,h*.40)..close();
-        canvas.drawPath(bolt,fill);
-        break;
-      case 'quiz':
-        canvas.drawCircle(center,15,p);
-        final tp=TextPainter(text:const TextSpan(text:'?',style:TextStyle(color:Colors.white,fontSize:27,fontWeight:FontWeight.w900)),textDirection:TextDirection.ltr)..layout();
-        tp.paint(canvas,Offset((w-tp.width)/2,(h-tp.height)/2-1));
-        break;
-      case 'snake':
-        final path=Path()..moveTo(w*.15,h*.72)..cubicTo(w*.15,h*.18,w*.78,h*.18,w*.72,h*.52)..cubicTo(w*.68,h*.8,w*.38,h*.78,w*.4,h*.52);
-        canvas.drawPath(path,p);
-        canvas.drawCircle(Offset(w*.73,h*.52),5,fill);
-        break;
-      case 'chess':
-        final base=Path()..moveTo(w*.22,h*.84)..lineTo(w*.78,h*.84)..lineTo(w*.7,h*.74)..lineTo(w*.3,h*.74)..close();
-        canvas.drawPath(base,fill);
-        canvas.drawCircle(Offset(w*.5,h*.28),6,fill);
-        canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w*.36,h*.36,w*.28,h*.34),const Radius.circular(5)),fill);
-        break;
-      case 'pacman':
-        final rect=Rect.fromCircle(center:center,radius:16);
-        canvas.drawArc(rect,.55,5.18,true,fill);
-        for(var i=0;i<3;i++) canvas.drawCircle(Offset(w*(.72+i*.07),h*.28),2.2,fill);
-        break;
-      case 'sonic':
-        canvas.drawCircle(center,14,p);
-        final spikes=Path()..moveTo(w*.28,h*.27)..lineTo(w*.12,h*.08)..lineTo(w*.43,h*.18)..lineTo(w*.52,h*.04)..lineTo(w*.63,h*.2)..lineTo(w*.82,h*.16);
-        canvas.drawPath(spikes,p);
-        canvas.drawLine(Offset(w*.2,h*.76),Offset(w*.8,h*.76),p);
-        canvas.drawLine(Offset(w*.62,h*.6),Offset(w*.8,h*.76),p);
-        canvas.drawLine(Offset(w*.62,h*.92),Offset(w*.8,h*.76),p);
-        break;
-    }
+  Widget build(BuildContext context) {
+    final index=gameIds.indexOf(gameId);
+    if(index<0) return const Icon(Icons.videogame_asset_rounded,color:Colors.white,size:29);
+    final column=index%4, row=index~/4;
+    return ClipRRect(
+      borderRadius:BorderRadius.circular(11),
+      child:SizedBox(
+        width:52,height:52,
+        child:ClipRect(
+          child:Align(
+            alignment:Alignment(column*(2/3)-1,row==0?-1:1),
+            widthFactor:.25,heightFactor:.5,
+            child:Image.asset(
+              'assets/game_icons.webp',
+              width:208,height:104,fit:BoxFit.fill,
+              errorBuilder:(context,error,stack)=>const Icon(Icons.videogame_asset_rounded,color:Colors.white),
+            ),
+          ),
+        ),
+      ),
+    );
   }
-  @override bool shouldRepaint(covariant ArcadeGameGlyph oldDelegate)=>oldDelegate.id!=id;
 }
 
 class PrivacyInfo extends StatelessWidget {
