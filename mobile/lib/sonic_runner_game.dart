@@ -109,6 +109,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
 }
 
 class _RunnerPainter extends CustomPainter{
+  static const double groundY=330;
   final double camera,playerX,playerY,worldWidth,loopProgress;final List<Offset> rings,enemies;final Set<int> collected,defeated;final List<Rect> hazards,platforms,springs;final bool invulnerable,inLoop,shield;
   _RunnerPainter({required this.camera,required this.playerX,required this.playerY,required this.rings,required this.collected,required this.hazards,required this.platforms,required this.springs,required this.enemies,required this.defeated,required this.worldWidth,required this.invulnerable,required this.inLoop,required this.loopProgress,required this.shield});
   @override void paint(Canvas canvas,Size size){
