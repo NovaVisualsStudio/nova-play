@@ -17,7 +17,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
   Point<int> food = const Point(12, 9), dir = const Point(1, 0), nextDir = const Point(1, 0);
   Timer? timer;
   int score = 0, best = 0, stage = 1, coins = 0;
-  bool started = false, paused = false, over = false;
+  bool started = false, paused = false, over = false, ending = false;
   String tr(String a, String f, String e) => widget.lang == 'ar' ? a : widget.lang == 'fr' ? f : e;
 
   @override
@@ -39,32 +39,40 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
     timer = Timer.periodic(Duration(milliseconds: speed), (_) => _tick());
   }
   void _tick() {
-    if (!mounted || paused || over) return;
+    if (!mounted || paused || over || ending) return;
+    final candidateDirection = nextDir;
+    final head = snake.first + candidateDirection;
+    final eating = head == food;
+    final collisionBody = eating ? snake : snake.take(snake.length - 1);
+    if (head.x < 0 || head.x >= n || head.y < 0 || head.y >= n || collisionBody.contains(head)) {
+      _end();
+      return;
+    }
     setState(() {
-      dir = nextDir;
-      final head = snake.first + dir;
-      final eating = head == food;
-      final collisionBody = eating ? snake : snake.take(snake.length - 1);
-      if (head.x < 0 || head.x >= n || head.y < 0 || head.y >= n || collisionBody.contains(head)) {
-        _end();
-        return;
-      }
+      dir = candidateDirection;
       snake.insert(0, head);
       if (eating) {
         score++;
         _food();
-        timer?.cancel();
-        timer = Timer.periodic(Duration(milliseconds: speed), (_) => _tick());
-      } else { snake.removeLast(); }
+      } else {
+        snake.removeLast();
+      }
     });
+    if (eating) {
+      timer?.cancel();
+      timer = Timer.periodic(Duration(milliseconds: speed), (_) => _tick());
+    }
   }
   void _turn(Point<int> d) {
-    if (d.x == -dir.x && d.y == -dir.y) return;
+    if (d.x == -nextDir.x && d.y == -nextDir.y) return;
     nextDir = d;
     if (!started) _start();
   }
   Future<void> _end() async {
-    timer?.cancel(); over = true; started = false;
+    if (ending || over) return;
+    ending = true;
+    timer?.cancel();
+    if (mounted) setState(() { over = true; started = false; paused = false; });
     final p = await SharedPreferences.getInstance();
     best = max(best, score);
     await p.setInt('best_snake', best);
@@ -78,7 +86,6 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
       await p.setInt('nova_coins', coins);
     }
     if (!mounted) return;
-    setState(() {});
     showDialog<void>(context: context, barrierDismissible: false, builder: (d) => AlertDialog(
       backgroundColor: const Color(0xFF151C31),
       title: Text(tr('انتهت اللعبة!', 'Partie terminée !', 'Game over!')),
@@ -95,7 +102,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
     timer?.cancel();
     setState(() {
       snake..clear()..addAll([const Point(8, 9), const Point(7, 9), const Point(6, 9)]);
-      dir = const Point(1, 0); nextDir = dir; score = 0; started = false; paused = false; over = false; _food();
+      dir = const Point(1, 0); nextDir = dir; score = 0; started = false; paused = false; over = false; ending = false; _food();
     });
   }
   void _pause() {
