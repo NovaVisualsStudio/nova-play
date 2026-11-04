@@ -162,7 +162,7 @@ void showStages() {
   );
 }
 @override void dispose(){quickTimer?.cancel();super.dispose();}void shuffle(){cards=[0,1,2,3,4,5,0,1,2,3,4,5]..shuffle(rng);}Future<void> save(int n)async{final p=await SharedPreferences.getInstance();final gameKey='best_${widget.game.id}';if(n>(p.getInt(gameKey)??0))await p.setInt(gameKey,n);if(n>(p.getInt('best')??0))await p.setInt('best',n);widget.onScore();}
-void reset(){quickTimer?.cancel();memoryTurn++;setState((){board=List.filled(9,'');open={};matched={};moves=0;shuffle();taps=0;seconds=10;started=false;finished=false;q=0;points=0;answered=false;selectedAnswer=null;});}
+void reset(){quickTimer?.cancel();memoryTurn++;setState((){board=List.filled(9,'');open={};matched={};moves=0;shuffle();taps=0;seconds=10;started=false;finished=false;q=0;points=0;answered=false;selectedAnswer=null;stageAwarded=false;});}
 String? winner(){const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];for(final a in lines){if(board[a[0]].isNotEmpty&&board[a[0]]==board[a[1]]&&board[a[1]]==board[a[2]])return board[a[0]];}return board.every((e)=>e.isNotEmpty)?'D':null;}
 @override
 Widget build(BuildContext c) {
