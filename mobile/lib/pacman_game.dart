@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'game_artwork.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _maze = <String>[
@@ -357,7 +358,7 @@ class _PacManGamePageState extends State<PacManGamePage> {
       textDirection: widget.lang == 'ar' ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('PAC-MAN'),
+          title: Row(mainAxisSize: MainAxisSize.min, children: [GameArtwork(gameId: 'pacman', width: 42), const SizedBox(width: 9), const Text('PAC-MAN')]),
           actions: [
             IconButton(
               tooltip: _t('إعادة', 'Réinitialiser', 'Reset'),
