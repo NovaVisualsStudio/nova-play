@@ -1,10 +1,11 @@
-name: Build Android APK
+name: Build Android APK and App Bundle
 on:
   workflow_dispatch:
   push:
     branches: [mobile-app]
     paths:
       - 'mobile/**'
+      - '.github/workflows/build-android.yml'
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -17,14 +18,21 @@ jobs:
         with:
           channel: stable
       - name: Generate Android platform project
-        run: flutter create . --platforms android
+        run: flutter create --org com.novavisuals --project-name nova_play . --platforms android
       - name: Resolve dependencies
         run: flutter pub get
       - name: Analyze
         run: flutter analyze
       - name: Build release APK
         run: flutter build apk --release
-      - uses: actions/upload-artifact@v4
+      - name: Build Google Play App Bundle
+        run: flutter build appbundle --release
+      - name: Upload Android release files
+        uses: actions/upload-artifact@v4
         with:
-          name: nova-play-android-apk
-          path: mobile/build/app/outputs/flutter-apk/app-release.apk
+          name: nova-play-android-release
+          path: |
+            mobile/build/app/outputs/flutter-apk/app-release.apk
+            mobile/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
