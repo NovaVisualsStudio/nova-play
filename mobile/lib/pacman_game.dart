@@ -367,7 +367,7 @@ class _PacManGamePageState extends State<PacManGamePage> with WidgetsBindingObse
       textDirection: widget.lang == 'ar' ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(
-          title: Row(mainAxisSize: MainAxisSize.min, children: [GameArtwork(gameId: 'pacman', width: 42), const SizedBox(width: 9), const Text('PAC-MAN')]),
+          title: Row(mainAxisSize: MainAxisSize.min, children: [Hero(tag: 'nova-art-pacman', child: GameArtwork(gameId: 'pacman', width: 42)), const SizedBox(width: 9), const Text('PAC-MAN')]),
           actions: [
             IconButton(
               tooltip: _t('إعادة', 'Réinitialiser', 'Reset'),
