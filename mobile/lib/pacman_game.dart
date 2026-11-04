@@ -145,7 +145,7 @@ class _PacManGamePageState extends State<PacManGamePage> {
       _paused = false;
     });
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(milliseconds: 175), (_) => _tickGame());
+    _timer = Timer.periodic(Duration(milliseconds: max(95, 175 - (_level - 1) * 10)), (_) => _tickGame());
   }
 
   void _pause() {
@@ -199,30 +199,48 @@ class _PacManGamePageState extends State<PacManGamePage> {
         _resetBoard();
         _started = true;
         _timer?.cancel();
-        _timer = Timer.periodic(const Duration(milliseconds: 160), (_) => _tickGame());
+        _timer = Timer.periodic(Duration(milliseconds: max(95, 175 - (_level - 1) * 10)), (_) => _tickGame());
       }
     });
   }
 
+  int _pathDistance(int start, int target) {
+    if (start == target) return 0;
+    final distances = List<int>.filled(_w * _h, -1);
+    final queue = <int>[start];
+    distances[start] = 0;
+    var cursor = 0;
+    while (cursor < queue.length) {
+      final cell = queue[cursor++];
+      for (final move in _moves) {
+        final next = _step(cell, move);
+        if (next == null || distances[next] != -1) continue;
+        distances[next] = distances[cell] + 1;
+        if (next == target) return distances[next];
+        queue.add(next);
+      }
+    }
+    return _w * _h;
+  }
+
   void _moveGhost(_Ghost ghost) {
     final options = _moves
-        .map((m) => (move: m, cell: _step(ghost.cell, m)))
-        .where((v) => v.cell != null)
+        .map((move) => (move: move, cell: _step(ghost.cell, move)))
+        .where((option) => option.cell != null)
         .toList();
     if (options.isEmpty) return;
-    options.sort((a, b) {
-      final da = ( _x(a.cell!) - _x(_player)).abs() + (_y(a.cell!) - _y(_player)).abs();
-      final db = ( _x(b.cell!) - _x(_player)).abs() + (_y(b.cell!) - _y(_player)).abs();
-      return _frightened > 0 ? db.compareTo(da) : da.compareTo(db);
-    });
-    final bestDistance = ( _x(options.first.cell!) - _x(_player)).abs() +
-        (_y(options.first.cell!) - _y(_player)).abs();
-    final tied = options.where((v) {
-      final d = (_x(v.cell!) - _x(_player)).abs() + (_y(v.cell!) - _y(_player)).abs();
-      return d == bestDistance;
-    }).toList();
+    final ranked = options.map((option) => (
+      move: option.move,
+      cell: option.cell!,
+      distance: _pathDistance(option.cell!, _player),
+    )).toList();
+    ranked.sort((a, b) => _frightened > 0
+        ? b.distance.compareTo(a.distance)
+        : a.distance.compareTo(b.distance));
+    final bestDistance = ranked.first.distance;
+    final tied = ranked.where((option) => option.distance == bestDistance).toList();
     final chosen = tied[_tick % tied.length];
-    ghost.cell = chosen.cell!;
+    ghost.cell = chosen.cell;
     ghost.direction = chosen.move;
   }
 
@@ -292,7 +310,8 @@ class _PacManGamePageState extends State<PacManGamePage> {
       );
 
   Widget _cell(int cell) {
-    final ghost = _ghosts.where((g) => g.cell == cell && g.release == 0).firstOrNull;
+    final matchingGhosts = _ghosts.where((g) => g.cell == cell && g.release == 0).toList();
+    final ghost = matchingGhosts.isEmpty ? null : matchingGhosts.first;
     final isPlayer = cell == _player;
     final isPower = _power.contains(cell);
     final isPellet = _pellets.contains(cell);
@@ -311,7 +330,7 @@ class _PacManGamePageState extends State<PacManGamePage> {
                 child: const Icon(Icons.circle, color: Color(0xFFFFD84D), size: 17),
               )
             : ghost != null
-                ? Icon(Icons.sports_baseball_rounded, color: _frightened > 0 ? const Color(0xFF4C83FF) : ghost.color, size: 14)
+                ? Text(_frightened > 0 ? '👻' : '👾', style: TextStyle(fontSize: 14, color: ghost.color))
                 : isPower
                     ? const Icon(Icons.circle, color: Colors.white, size: 7)
                     : isPellet
@@ -398,37 +417,3 @@ class _PacManGamePageState extends State<PacManGamePage> {
                     const SizedBox(height: 4),
                     _arrow(Icons.arrow_downward, _Move.down),
                   ]),
-                  const SizedBox(width: 8),
-                  _arrow(Icons.arrow_forward, _Move.right),
-                ]),
-                const SizedBox(height: 8),
-                Wrap(spacing: 10, children: [
-                  FilledButton.icon(
-                    onPressed: _started ? _pause : _start,
-                    icon: Icon(_started ? Icons.pause : Icons.play_arrow),
-                    label: Text(_started ? _t('إيقاف مؤقت', 'Pause', 'Pause') : _t('ابدأ اللعب', 'Démarrer', 'Start')),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _reset,
-                    icon: const Icon(Icons.replay),
-                    label: Text(_t('إعادة', 'Réinitialiser', 'Reset')),
-                  ),
-                ]),
-                const SizedBox(height: 10),
-                Text(
-                  _t(
-                    'القواعد: اجمع النقاط الصغيرة (10) والكبيرة (50). تمنحك النقطة الكبيرة وقتاً مؤقتاً لالتهام الأشباح. اصطدامك بشبح عادي يفقدك حياة؛ لديك 3 أرواح. أكمل المتاهة للانتقال إلى مستوى أسرع.',
-                    'Règles : les petites pastilles valent 10 et les grandes 50. Une grande pastille rend les fantômes vulnérables pendant un temps limité. Un contact normal coûte une vie ; vous en avez 3. Terminez le labyrinthe pour passer au niveau suivant, plus rapide.',
-                    'Rules: small dots are worth 10 and power pellets 50. A power pellet lets you eat ghosts for a limited time. Touching a normal ghost costs one of your 3 lives. Clear the maze to advance to a faster level.',
-                  ),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white54, fontSize: 11, height: 1.35),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
