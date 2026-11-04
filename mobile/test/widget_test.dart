@@ -138,4 +138,72 @@ void main() {
     expect(find.text('Choisissez un jeu'), findsOneWidget);
     expect(find.text('Morpion'), findsOneWidget);
   });
+
+  testWidgets('memory reset cancels a pending mismatch hide callback', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'اختبار الذاكرة');
+
+    final cards = find.descendant(
+      of: find.byType(GridView),
+      matching: find.byType(InkWell),
+    );
+    expect(cards, findsNWidgets(12));
+
+    await tester.tap(cards.at(0));
+    await tester.pump();
+    await tester.tap(cards.at(1));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 800));
+
+    expect(find.text('?'), findsNWidgets(12));
+    expect(find.text('الأزواج: 0 / 6'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('quiz gives correction after a wrong answer and allows continuing', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'اختبر معلوماتك');
+
+    await tester.tap(find.text('الأرض'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('الإجابة الصحيحة: المشتري'), findsOneWidget);
+    expect(find.text('التالي'), findsOneWidget);
+
+    await tester.tap(find.text('التالي'));
+    await tester.pumpAndSettle();
+    expect(find.text('السؤال 2 / 5'), findsOneWidget);
+    expect(find.text('كم لوناً في قوس قزح؟'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tic-tac-toe accepts a move and reset clears the board', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'تحدي إكس أو');
+
+    final cells = find.descendant(
+      of: find.byType(GridView),
+      matching: find.byType(InkWell),
+    );
+    await tester.tap(cells.at(0));
+    await tester.pumpAndSettle();
+
+    expect(find.text('X'), findsOneWidget);
+    expect(find.text('O'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(find.text('X     O'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
