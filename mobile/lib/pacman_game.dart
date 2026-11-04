@@ -42,7 +42,7 @@ class PacManGamePage extends StatefulWidget {
   State<PacManGamePage> createState() => _PacManGamePageState();
 }
 
-class _PacManGamePageState extends State<PacManGamePage> {
+class _PacManGamePageState extends State<PacManGamePage> with WidgetsBindingObserver {
   static const int _w = 15;
   static const int _h = 17;
   static const int _playerHomeCell = _w + 1;
@@ -72,8 +72,16 @@ class _PacManGamePageState extends State<PacManGamePage> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadBest();
     _resetBoard();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed && _started && !_paused && !_over) {
+      _pause();
+    }
   }
 
   Future<void> _loadBest() async {
@@ -289,6 +297,7 @@ class _PacManGamePageState extends State<PacManGamePage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     super.dispose();
   }
