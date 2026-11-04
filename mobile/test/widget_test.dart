@@ -61,6 +61,31 @@ Future<void> openGame(
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('tic-tac-toe draw is not scored as a player win', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'تحدي إكس أو');
+
+    final cells = find.descendant(
+      of: find.byType(GridView),
+      matching: find.byType(GestureDetector),
+    );
+    // This optimal line ends in a draw against the built-in minimax opponent.
+    for (final move in [4, 2, 3, 8, 7]) {
+      await tester.tap(cells.at(move));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.text('تعادل!'), findsOneWidget);
+    expect(find.text('حاول مرة أخرى'), findsOneWidget);
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getInt('best_xo'), 5);
+    expect(preferences.getInt('stage_xo'), isNull);
+    expect(preferences.getInt('nova_coins') ?? 0, 0);
+    expect(tester.takeException(), isNull);
+  });
+
 }
 
 void main() {
