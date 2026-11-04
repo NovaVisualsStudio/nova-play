@@ -40,6 +40,8 @@ void main() {
     expect(find.text('اختبار الذاكرة'), findsOneWidget);
     expect(find.text('سرعة الاستجابة'), findsOneWidget);
     expect(find.text('اختبر معلوماتك'), findsOneWidget);
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
+    await tester.pumpAndSettle();
     expect(find.text('باك مان'), findsOneWidget);
   });
 
@@ -373,6 +375,8 @@ void main() {
   testWidgets('Pac-Man opens with maze, lives, score, rules and controls', (tester) async {
     configurePhoneViewport(tester);
     await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -900));
     await tester.pumpAndSettle();
     await openGame(tester, 'باك مان');
 
