@@ -15,7 +15,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   Timer? _timer;
   double x=60, y=groundY-42, vx=0, vy=0, camera=0, jumpBuffer=0, coyote=0, invulnerable=0, loopProgress=0, enemyClock=0;
   int stage=1, defeatedEnemies=0;
-  bool inLoop=false, shield=false;
+  bool inLoop=false, loopUsed=false, shield=false;
   bool left=false, right=false, jumping=false, rolling=false, grounded=true, paused=true, dead=false, complete=false;
   int rings=0, lives=3, score=0;
   final Set<int> collected={}, broken={};
@@ -31,7 +31,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   void _start(){if(dead)_reset(preserveStage:true);if(!paused)return;setState(()=>paused=false);_timer??=Timer.periodic(const Duration(milliseconds:16),(_)=>_step(1/60));}
   void _nextStage(){final next=stage>=3?1:stage+1;_reset(preserveStage:true);setState(()=>stage=next);}
   void _pause(){if(!mounted)return;setState(()=>paused=true);}
-  void _reset({bool preserveStage=false}){final currentStage=stage;x=60;y=groundY-42;vx=0;vy=0;camera=0;rings=0;lives=3;score=0;stage=preserveStage?currentStage:1;defeatedEnemies=0;collected.clear();broken.clear();defeated.clear();grounded=true;dead=false;complete=false;invulnerable=0;jumpBuffer=0;coyote=0;loopProgress=0;inLoop=false;shield=false;enemyClock=0;}
+  void _reset({bool preserveStage=false}){final currentStage=stage;x=60;y=groundY-42;vx=0;vy=0;camera=0;rings=0;lives=3;score=0;stage=preserveStage?currentStage:1;defeatedEnemies=0;collected.clear();broken.clear();defeated.clear();grounded=true;dead=false;complete=false;invulnerable=0;jumpBuffer=0;coyote=0;loopProgress=0;inLoop=false;loopUsed=false;shield=false;enemyClock=0;}
   void _step(double dt){
     if(!mounted||paused||dead||complete)return;dt=dt.clamp(0.0,0.033).toDouble();final oldY=y;
     const accel=1450.0,maxSpeed=520.0,friction=900.0;
@@ -46,17 +46,22 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
     x+=vx*dt;y+=vy*dt;grounded=false;
     // A momentum-gated loop-de-loop section: the runner follows a curved track
     // while the camera keeps the course moving forward.
-    const loopStart=1430.0, loopLength=250.0;
-    if(x>=loopStart&&x<=loopStart+loopLength&&vx.abs()>235){
-      inLoop=true;loopProgress=((x-loopStart)/loopLength).clamp(0.0,1.0);
-      final arc=math.sin(loopProgress*math.pi);
-      y=groundY-42-arc*150;vy=0;grounded=true;coyote=.10;
+    const loopStart=1430.0, loopRadius=110.0;
+    if(!inLoop&&!loopUsed&&x>=loopStart&&vx>235){inLoop=true;loopUsed=true;loopProgress=0;}
+    if(inLoop){
+      loopProgress+=vx.abs()*dt/(2*math.pi*loopRadius);
+      final angle=loopProgress*2*math.pi;
+      x=loopStart+loopRadius*math.sin(angle);
+      final centerY=groundY-21-loopRadius;
+      y=centerY+loopRadius*math.cos(angle)-18;
+      vy=0;grounded=true;coyote=.10;
       vx=math.min(690.0,vx+95*dt);
-    }else if(inLoop&&x>loopStart+loopLength){inLoop=false;y=groundY-42;vy=0;grounded=true;}
+      if(loopProgress>=1){inLoop=false;loopProgress=1;x=loopStart+loopRadius+15;y=groundY-42;vy=0;grounded=true;}
+    }
     // Gentle downhill/uphill track sections feed momentum back into the runner.
     if(!inLoop&&x>1880&&x<2070)vy+= (x<1975? -260:260)*dt;
     if(!inLoop&&x>2070&&x<2180&&y>groundY-42){y=groundY-42;vy=0;grounded=true;}
-    if(vy>=0){
+    if(vy>=0&&!inLoop){
       if(oldY+42<=groundY&&y+42>=groundY){y=groundY-42;vy=0;grounded=true;coyote=.10;}
       for(final p in platforms){if(x+25>p.left&&x-25<p.right&&oldY+42<=p.top&&y+42>=p.top){y=p.top-42;vy=0;grounded=true;coyote=.10;}}
     }
@@ -123,7 +128,7 @@ class _RunnerPainter extends CustomPainter{
     for(final p in platforms){canvas.drawRect(p,Paint()..color=const Color(0xFF8D633C));canvas.drawRect(Rect.fromLTWH(p.left,p.top,p.width,5),Paint()..color=const Color(0xFF42C86B));}
     // Curved high-speed track and banked slope artwork.
     final loopPaint=Paint()..color=const Color(0xFF2C8B50)..style=PaintingStyle.stroke..strokeWidth=17..strokeCap=StrokeCap.round;
-    canvas.drawArc(Rect.fromLTWH(1428,groundY-192,254,300),math.pi,math.pi,false,loopPaint);
+    canvas.drawCircle(const Offset(1430,199),110,loopPaint);
     final slope=Path()..moveTo(1870,groundY)..quadraticBezierTo(1970,groundY-82,2070,groundY)..lineTo(2180,groundY)..lineTo(2180,groundY+20)..lineTo(1870,groundY+20)..close();
     canvas.drawPath(slope,Paint()..color=const Color(0xFF39A95E));
     final ringPaint=Paint()..color=const Color(0xFFFFD84D)..style=PaintingStyle.stroke..strokeWidth=5;for(int i=0;i<rings.length;i++){if(!collected.contains(i)){final r=rings[i];canvas.drawOval(Rect.fromCenter(center:r,width:19,height:25),ringPaint);}}
