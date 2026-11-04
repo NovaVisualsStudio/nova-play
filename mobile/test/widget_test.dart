@@ -258,4 +258,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Snake game opens with classic board, controls and rules', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SnakeGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('لعبة الأفعى'), findsOneWidget);
+    expect(find.text('ابدأ اللعب'), findsOneWidget);
+    expect(find.textContaining('كُل الطعام'), findsOneWidget);
+    expect(find.byType(GridView), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
