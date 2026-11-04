@@ -28,7 +28,46 @@ return [('ما أكبر كوكب؟','المشتري',['الأرض','المريخ
 }
 @override void initState(){super.initState();shuffle();loadProgress();}
 Future<void> loadProgress()async{final p=await SharedPreferences.getInstance();if(!mounted)return;setState((){stage=p.getInt('stage_${widget.game.id}')??1;coins=p.getInt('nova_coins')??0;});}
-Future<void> completeStage(int stars)async{if(stageAwarded)return;stageAwarded=true;final reward=stars*25+stage*5;final p=await SharedPreferences.getInstance();final next=stage<10?stage+1:10;await p.setInt('stage_${widget.game.id}',next);await p.setInt('nova_coins',(p.getInt('nova_coins')??0)+reward);if(!mounted)return;setState((){coins+=reward;if(stage<10)stage++;});showDialog(context:context,builder:(ctx)=>AlertDialog(backgroundColor:panel,title:Text(widget.lang=='ar'?'مرحلة مكتملة!':widget.lang=='fr'?'Niveau terminé !':'Stage complete!'),content:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.emoji_events_rounded,color:Color(0xFFFFC857),size:64),Text(List.filled(stars,'⭐').join(),style:const TextStyle(fontSize:28)),Text('+$reward 🪙',style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900,color:Color(0xFFFFC857))),Text(widget.lang=='ar'?'رصيدك: $coins قطعة ذهبية':widget.lang=='fr'?'Solde : $coins pièces':'Balance: $coins coins')]),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:Text(widget.lang=='ar'?'متابعة':widget.lang=='fr'?'Continuer':'Continue'))]));}
+Future<void> completeStage(int stars) async {
+  if (stageAwarded) return;
+  stageAwarded = true;
+  final passed = stars > 0;
+  final reward = passed ? stars * 25 + stage * 5 : 0;
+  final prefs = await SharedPreferences.getInstance();
+  final nextStage = passed && stage < 10 ? stage + 1 : stage;
+  if (passed) await prefs.setInt('stage_${widget.game.id}', nextStage);
+  if (passed) await prefs.setInt('nova_coins', (prefs.getInt('nova_coins') ?? 0) + reward);
+  if (!mounted) return;
+  setState(() {
+    coins += reward;
+    stage = nextStage;
+  });
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      backgroundColor: panel,
+      title: Text(passed
+          ? (widget.lang == 'ar' ? 'مرحلة مكتملة!' : widget.lang == 'fr' ? 'Niveau terminé !' : 'Stage complete!')
+          : (widget.lang == 'ar' ? 'حاول مرة أخرى' : widget.lang == 'fr' ? 'Réessayez' : 'Try again')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(passed ? Icons.emoji_events_rounded : Icons.replay_rounded,
+              color: passed ? const Color(0xFFFFC857) : cyan, size: 64),
+          Text(List.filled(stars, '⭐').join(), style: const TextStyle(fontSize: 28)),
+          if (passed) Text('+$reward 🪙', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900, color: Color(0xFFFFC857))),
+          Text(widget.lang == 'ar' ? 'رصيدك: $coins قطعة ذهبية' : widget.lang == 'fr' ? 'Solde : $coins pièces' : 'Balance: $coins coins'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(widget.lang == 'ar' ? 'متابعة' : widget.lang == 'fr' ? 'Continuer' : 'Continue'),
+        ),
+      ],
+    ),
+  );
+}
 void showStages(){showDialog(context:context,builder:(ctx)=>StatefulBuilder(builder:(ctx,refresh)=>AlertDialog(backgroundColor:panel,title:Text(widget.lang=='ar'?'المراحل والمكافآت':widget.lang=='fr'?'Niveaux et récompenses':'Stages & rewards'),content:SizedBox(width:300,child:Column(mainAxisSize:MainAxisSize.min,children:[Text(widget.lang=='ar'?'المرحلة المفتوحة: $stage / 10':widget.lang=='fr'?'Niveau débloqué : $stage / 10':'Unlocked stage: $stage / 10'),Text('🪙 $coins',style:const TextStyle(color:Color(0xFFFFC857),fontWeight:FontWeight.bold)),const SizedBox(height:12),Wrap(spacing:8,runSpacing:8,children:List.generate(10,(i){final n=i+1;final unlocked=n<=stage;return InkWell(onTap:unlocked?(){setState(()=>stage=n);Navigator.pop(ctx);}:null,child:Container(width:48,height:54,decoration:BoxDecoration(gradient:unlocked?const LinearGradient(colors:[purple,Color(0xFF30245F)]):null,color:unlocked?null:bg,borderRadius:BorderRadius.circular(12),border:Border.all(color:unlocked?cyan:Colors.white24)),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(unlocked?Icons.lock_open_rounded:Icons.lock_rounded,size:15),Text('$n',style:const TextStyle(fontWeight:FontWeight.bold))])));})),const SizedBox(height:12),Text(widget.lang=='ar'?'كل مرحلة تمنحك عملات ونجوماً عند الفوز.':widget.lang=='fr'?'Gagnez des pièces et des étoiles à chaque victoire.':'Win to earn coins and stars at every stage.',textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,fontSize:12))])),actions:[TextButton(onPressed:()=>Navigator.pop(ctx),child:Text(widget.lang=='ar'?'إغلاق':widget.lang=='fr'?'Fermer':'Close'))]));}
 @override void dispose(){quickTimer?.cancel();super.dispose();}void shuffle(){cards=[0,1,2,3,4,5,0,1,2,3,4,5]..shuffle(rng);}Future<void> save(int n)async{final p=await SharedPreferences.getInstance();final gameKey='best_${widget.game.id}';if(n>(p.getInt(gameKey)??0))await p.setInt(gameKey,n);if(n>(p.getInt('best')??0))await p.setInt('best',n);widget.onScore();}
 void reset(){quickTimer?.cancel();memoryTurn++;setState((){board=List.filled(9,'');open={};matched={};moves=0;shuffle();taps=0;seconds=10;started=false;finished=false;q=0;points=0;answered=false;selectedAnswer=null;});}
@@ -112,7 +151,7 @@ Widget memory() {
 }
 void flip(int i){if(open.contains(i)||matched.contains(i)||open.length>=2)return;setState(()=>open.add(i));if(open.length==2){moves++;final pair=open.toList();if(cards[pair[0]]==cards[pair[1]]){setState((){matched.addAll(pair);open.clear();});if(matched.length==12){save(max(1,100-moves));completeStage(moves<=8?3:moves<=12?2:1);}}else{final turn=memoryTurn;Future.delayed(const Duration(milliseconds:700),(){if(mounted&&turn==memoryTurn)setState(()=>open.clear());});}}}
 Widget quick()=>Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'tap'),style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:15),Text(started?'$seconds s':'10 s',style:const TextStyle(fontSize:35,color:cyan,fontWeight:FontWeight.w900)),const SizedBox(height:20),GestureDetector(onTap:(){if(finished)return;if(!started){setState(()=>started=true);quickTimer=Timer.periodic(const Duration(seconds:1),(timer){if(!mounted){timer.cancel();return;}if(seconds<=1){timer.cancel();setState(()=>seconds=0);setState((){started=false;finished=true;});save(taps);completeStage(taps>=25?3:taps>=15?2:1);}else{setState(()=>seconds--);}});}if(started)setState(()=>taps++);},child:AnimatedContainer(duration:const Duration(milliseconds:180),width:205,height:205,decoration:BoxDecoration(shape:BoxShape.circle,gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFFB09CFF),purple,Color(0xFF30245F)]),border:Border.all(color:Colors.white.withOpacity(.32),width:2),boxShadow:[BoxShadow(color:purple.withOpacity(.48),blurRadius:started?38:24,spreadRadius:started?5:1),const BoxShadow(color:Colors.black54,blurRadius:15,offset:Offset(0,12))]),child:Center(child:Text(finished?taps.toString():started?taps.toString():tr(widget.lang,'start'),style:const TextStyle(fontSize:30,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black45,blurRadius:8,offset:Offset(0,3))]))))),if(finished)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);
-Widget quiz(){if(q>=qs.length)return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'done'),style:const TextStyle(fontSize:23,fontWeight:FontWeight.bold)),Text(points.toString()+' / 5',style:const TextStyle(fontSize:36,color:cyan)),FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);final item=qs[q];return Column(mainAxisAlignment:MainAxisAlignment.center,crossAxisAlignment:CrossAxisAlignment.stretch,children:[Text(tr(widget.lang,'question')+' '+(q+1).toString()+' / 5',style:const TextStyle(color:cyan,fontWeight:FontWeight.bold)),const SizedBox(height:16),Text(item.$1,style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:20),...item.$3.map((o)=>Padding(padding:const EdgeInsets.only(bottom:10),child:OutlinedButton(onPressed:answered?null:(){setState(()=>answered=true);selectedAnswer=o;if(o==item.$2)points++;},child:Text(o,style:const TextStyle(fontSize:17))))),if(answered)Padding(padding:const EdgeInsets.only(bottom:12),child:Text(selectedAnswer==item.$2?(widget.lang=='ar'?'إجابة صحيحة':widget.lang=='fr'?'Bonne réponse':'Correct!'):(widget.lang=='ar'?'الإجابة الصحيحة: ':widget.lang=='fr'?'Bonne réponse : ':'Correct answer: ')+item.$2,style:TextStyle(color:selectedAnswer==item.$2?cyan:const Color(0xFFFFA43A),fontWeight:FontWeight.bold))),if(answered)FilledButton(onPressed:(){setState((){q++;answered=false;selectedAnswer=null;});if(q==5){save(points*10);completeStage(points>=5?3:points>=3?2:1);}},child:Text(tr(widget.lang,'next')))]);}
+Widget quiz(){if(q>=qs.length)return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'done'),style:const TextStyle(fontSize:23,fontWeight:FontWeight.bold)),Text(points.toString()+' / 5',style:const TextStyle(fontSize:36,color:cyan)),FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);final item=qs[q];return Column(mainAxisAlignment:MainAxisAlignment.center,crossAxisAlignment:CrossAxisAlignment.stretch,children:[Text(tr(widget.lang,'question')+' '+(q+1).toString()+' / 5',style:const TextStyle(color:cyan,fontWeight:FontWeight.bold)),const SizedBox(height:16),Text(item.$1,style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:20),...item.$3.map((o)=>Padding(padding:const EdgeInsets.only(bottom:10),child:OutlinedButton(onPressed:answered?null:(){setState(()=>answered=true);selectedAnswer=o;if(o==item.$2)points++;},child:Text(o,style:const TextStyle(fontSize:17))))),if(answered)Padding(padding:const EdgeInsets.only(bottom:12),child:Text(selectedAnswer==item.$2?(widget.lang=='ar'?'إجابة صحيحة':widget.lang=='fr'?'Bonne réponse':'Correct!'):(widget.lang=='ar'?'الإجابة الصحيحة: ':widget.lang=='fr'?'Bonne réponse : ':'Correct answer: ')+item.$2,style:TextStyle(color:selectedAnswer==item.$2?cyan:const Color(0xFFFFA43A),fontWeight:FontWeight.bold))),if(answered)FilledButton(onPressed:(){setState((){q++;answered=false;selectedAnswer=null;});if(q==5){save(points*10);completeStage(points>=5?3:points>=3?2:0);}},child:Text(tr(widget.lang,'next')))]);}
 }
 
 
