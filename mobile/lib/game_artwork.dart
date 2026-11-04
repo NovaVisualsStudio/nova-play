@@ -86,6 +86,17 @@ class GameCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final index = GameArtwork.gameIds.indexOf(gameId);
+    if (index < 0) {
+      return AspectRatio(
+        aspectRatio: 4 / 3,
+        child: const Center(
+          child: Icon(Icons.videogame_asset_rounded, color: Colors.white70),
+        ),
+      );
+    }
+    final column = index % 4;
+    final row = index ~/ 4;
     return AspectRatio(
       aspectRatio: 4 / 3,
       child: ClipRRect(
@@ -93,10 +104,37 @@ class GameCover extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            GameArtwork(
-              gameId: gameId,
-              width: 640,
-              height: 480,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final height = constraints.maxHeight;
+                return ClipRect(
+                  child: Align(
+                    alignment: Alignment(
+                      column * (2 / 3) - 1,
+                      row == 0 ? -1 : 1,
+                    ),
+                    widthFactor: .25,
+                    heightFactor: .5,
+                    child: Image.asset(
+                      'assets/game_icons.webp',
+                      width: width * 4,
+                      height: height * 2,
+                      fit: BoxFit.fill,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: const Color(0xFF151C31),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.videogame_asset_rounded,
+                          color: Colors.white70,
+                          size: 42,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
             const DecoratedBox(
               decoration: BoxDecoration(
