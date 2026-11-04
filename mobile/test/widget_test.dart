@@ -162,10 +162,10 @@ void main() {
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
-    expect(find.text('ابدأ اللعب'), findsOneWidget);
-    await tester.tap(find.text('ابدأ اللعب'));
+    expect(find.byTooltip('استئناف'), findsOneWidget);
+    await tester.tap(find.byTooltip('استئناف'));
     await tester.pump();
-    expect(find.text('إيقاف مؤقت'), findsOneWidget);
+    expect(find.byTooltip('إيقاف مؤقت'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

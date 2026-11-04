@@ -158,7 +158,13 @@ class _SnakeGamePageState extends State<SnakeGamePage> with WidgetsBindingObserv
     child: Scaffold(
       backgroundColor: const Color(0xFF090D1B),
       appBar: AppBar(title: Row(mainAxisSize: MainAxisSize.max, children: [Hero(tag: 'nova-art-snake', child: GameArtwork(gameId: 'snake', width: 42)), const SizedBox(width: 9), Expanded(child: Text(tr('لعبة الأفعى', 'Jeu du serpent', 'Snake'), maxLines: 1, overflow: TextOverflow.ellipsis))]), actions: [
-        IconButton(onPressed: _pause, icon: Icon(paused ? Icons.play_arrow : Icons.pause)),
+        IconButton(
+          tooltip: paused
+              ? tr('استئناف', 'Reprendre', 'Resume')
+              : tr('إيقاف مؤقت', 'Pause', 'Pause'),
+          onPressed: (started || paused) ? _pause : null,
+          icon: Icon(paused ? Icons.play_arrow : Icons.pause),
+        ),
         IconButton(onPressed: _reset, icon: const Icon(Icons.refresh)),
       ]),
       body: SafeArea(child: LayoutBuilder(builder: (context, c) {
