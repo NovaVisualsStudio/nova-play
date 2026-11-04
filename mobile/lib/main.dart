@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'snake_game.dart';
 import 'chess_game.dart';
@@ -283,6 +284,7 @@ Widget body(){switch(widget.game.id){case'xo':return xo();case'memory':return me
 Widget xo(){final w=winner();return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(w==null?'X     O':w=='D'?tr(widget.lang,'draw'):tr(widget.lang,'win'),style:const TextStyle(fontSize:21,fontWeight:FontWeight.bold)),const SizedBox(height:20),AspectRatio(aspectRatio:1,child:GridView.builder(physics:const NeverScrollableScrollPhysics(),itemCount:9,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:9,mainAxisSpacing:9),itemBuilder:(c,i)=>GestureDetector(onTap:()=>move(i),child:AnimatedContainer(duration:const Duration(milliseconds:260),decoration:BoxDecoration(gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:board[i].isEmpty?[const Color(0xFF273454),panel]:[board[i]=='X'?purple:cyan,board[i]=='X'?const Color(0xFF49328F):const Color(0xFF126A79)]),borderRadius:BorderRadius.circular(17),border:Border.all(color:(board[i]=='X'?purple:cyan).withOpacity(.45)),boxShadow:[BoxShadow(color:(board[i]=='X'?purple:cyan).withOpacity(board[i].isEmpty ? .08 : .32),blurRadius:board[i].isEmpty?5:18,offset:const Offset(0,7))]),child:Center(child:AnimatedSwitcher(duration:const Duration(milliseconds:280),transitionBuilder:(child,animation)=>ScaleTransition(scale:CurvedAnimation(parent:animation,curve:Curves.elasticOut),child:child),child:Text(board[i],key:ValueKey(board[i]),style:const TextStyle(fontSize:42,fontWeight:FontWeight.w900,color:Colors.white)))))))),if(w!=null)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);}
 void move(int i){
  if(board[i].isNotEmpty||winner()!=null)return;
+ HapticFeedback.selectionClick();
  setState(()=>board[i]='X');
  final playerResult=winner();
  if(playerResult=='X'){save(10);completeStage(3);return;}
@@ -325,9 +327,9 @@ Widget memory() {
     ],
   );
 }
-void flip(int i){if(open.contains(i)||matched.contains(i)||open.length>=2)return;setState(()=>open.add(i));if(open.length==2){moves++;final pair=open.toList();if(cards[pair[0]]==cards[pair[1]]){setState((){matched.addAll(pair);open.clear();});if(matched.length==12){save(max(1,100-moves));completeStage(moves<=8?3:moves<=12?2:1);}}else{final turn=memoryTurn;Future.delayed(const Duration(milliseconds:700),(){if(mounted&&turn==memoryTurn)setState(()=>open.clear());});}}}
-Widget quick()=>Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'tap'),style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:15),Text(started?'$seconds s':'10 s',style:const TextStyle(fontSize:35,color:cyan,fontWeight:FontWeight.w900)),const SizedBox(height:20),GestureDetector(onTap:(){if(finished)return;if(!started){setState(()=>started=true);quickTimer=Timer.periodic(const Duration(seconds:1),(timer){if(!mounted){timer.cancel();return;}if(seconds<=1){timer.cancel();setState(()=>seconds=0);setState((){started=false;finished=true;});save(taps);completeStage(taps>=25?3:taps>=15?2:1);}else{setState(()=>seconds--);}});}if(started)setState(()=>taps++);},child:AnimatedContainer(duration:const Duration(milliseconds:180),width:205,height:205,decoration:BoxDecoration(shape:BoxShape.circle,gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFFB09CFF),purple,Color(0xFF30245F)]),border:Border.all(color:Colors.white.withOpacity(.32),width:2),boxShadow:[BoxShadow(color:purple.withOpacity(.48),blurRadius:started?38:24,spreadRadius:started?5:1),const BoxShadow(color:Colors.black54,blurRadius:15,offset:Offset(0,12))]),child:Center(child:Text(finished?taps.toString():started?taps.toString():tr(widget.lang,'start'),style:const TextStyle(fontSize:30,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black45,blurRadius:8,offset:Offset(0,3))]))))),if(finished)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);
-Widget quiz(){if(q>=qs.length)return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'done'),style:const TextStyle(fontSize:23,fontWeight:FontWeight.bold)),Text(points.toString()+' / 5',style:const TextStyle(fontSize:36,color:cyan)),FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);final item=qs[q];return Column(mainAxisAlignment:MainAxisAlignment.center,crossAxisAlignment:CrossAxisAlignment.stretch,children:[Text(tr(widget.lang,'question')+' '+(q+1).toString()+' / 5',style:const TextStyle(color:cyan,fontWeight:FontWeight.bold)),const SizedBox(height:16),Text(item.$1,style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:20),...item.$3.map((o)=>Padding(padding:const EdgeInsets.only(bottom:10),child:OutlinedButton(onPressed:answered?null:(){setState(()=>answered=true);selectedAnswer=o;if(o==item.$2)points++;},child:Text(o,style:const TextStyle(fontSize:17))))),if(answered)Padding(padding:const EdgeInsets.only(bottom:12),child:Text(selectedAnswer==item.$2?(widget.lang=='ar'?'إجابة صحيحة':widget.lang=='fr'?'Bonne réponse':'Correct!'):(widget.lang=='ar'?'الإجابة الصحيحة: ':widget.lang=='fr'?'Bonne réponse : ':'Correct answer: ')+item.$2,style:TextStyle(color:selectedAnswer==item.$2?cyan:const Color(0xFFFFA43A),fontWeight:FontWeight.bold))),if(answered)FilledButton(onPressed:(){setState((){q++;answered=false;selectedAnswer=null;});if(q==5){save(points*10);completeStage(points>=5?3:points>=3?2:0);}},child:Text(tr(widget.lang,'next')))]);}
+void flip(int i){if(open.contains(i)||matched.contains(i)||open.length>=2)return;HapticFeedback.selectionClick();setState(()=>open.add(i));if(open.length==2){moves++;final pair=open.toList();if(cards[pair[0]]==cards[pair[1]]){setState((){matched.addAll(pair);open.clear();});if(matched.length==12){save(max(1,100-moves));completeStage(moves<=8?3:moves<=12?2:1);}}else{final turn=memoryTurn;Future.delayed(const Duration(milliseconds:700),(){if(mounted&&turn==memoryTurn)setState(()=>open.clear());});}}}
+Widget quick()=>Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'tap'),style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:15),Text(started?'$seconds s':'10 s',style:const TextStyle(fontSize:35,color:cyan,fontWeight:FontWeight.w900)),const SizedBox(height:20),GestureDetector(onTap:(){if(finished)return;HapticFeedback.lightImpact();if(!started){setState(()=>started=true);quickTimer=Timer.periodic(const Duration(seconds:1),(timer){if(!mounted){timer.cancel();return;}if(seconds<=1){timer.cancel();setState(()=>seconds=0);setState((){started=false;finished=true;});save(taps);completeStage(taps>=25?3:taps>=15?2:1);}else{setState(()=>seconds--);}});}if(started)setState(()=>taps++);},child:AnimatedContainer(duration:const Duration(milliseconds:180),width:205,height:205,decoration:BoxDecoration(shape:BoxShape.circle,gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFFB09CFF),purple,Color(0xFF30245F)]),border:Border.all(color:Colors.white.withOpacity(.32),width:2),boxShadow:[BoxShadow(color:purple.withOpacity(.48),blurRadius:started?38:24,spreadRadius:started?5:1),const BoxShadow(color:Colors.black54,blurRadius:15,offset:Offset(0,12))]),child:Center(child:Text(finished?taps.toString():started?taps.toString():tr(widget.lang,'start'),style:const TextStyle(fontSize:30,fontWeight:FontWeight.w900,shadows:[Shadow(color:Colors.black45,blurRadius:8,offset:Offset(0,3))]))))),if(finished)FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);
+Widget quiz(){if(q>=qs.length)return Column(mainAxisAlignment:MainAxisAlignment.center,children:[Text(tr(widget.lang,'done'),style:const TextStyle(fontSize:23,fontWeight:FontWeight.bold)),Text(points.toString()+' / 5',style:const TextStyle(fontSize:36,color:cyan)),FilledButton(onPressed:reset,child:Text(tr(widget.lang,'again')))]);final item=qs[q];return Column(mainAxisAlignment:MainAxisAlignment.center,crossAxisAlignment:CrossAxisAlignment.stretch,children:[Text(tr(widget.lang,'question')+' '+(q+1).toString()+' / 5',style:const TextStyle(color:cyan,fontWeight:FontWeight.bold)),const SizedBox(height:16),Text(item.$1,style:const TextStyle(fontSize:22,fontWeight:FontWeight.bold)),const SizedBox(height:20),...item.$3.map((o)=>Padding(padding:const EdgeInsets.only(bottom:10),child:OutlinedButton(onPressed:answered?null:(){HapticFeedback.selectionClick();setState(()=>answered=true);selectedAnswer=o;if(o==item.$2)points++;},child:Text(o,style:const TextStyle(fontSize:17))))),if(answered)Padding(padding:const EdgeInsets.only(bottom:12),child:Text(selectedAnswer==item.$2?(widget.lang=='ar'?'إجابة صحيحة':widget.lang=='fr'?'Bonne réponse':'Correct!'):(widget.lang=='ar'?'الإجابة الصحيحة: ':widget.lang=='fr'?'Bonne réponse : ':'Correct answer: ')+item.$2,style:TextStyle(color:selectedAnswer==item.$2?cyan:const Color(0xFFFFA43A),fontWeight:FontWeight.bold))),if(answered)FilledButton(onPressed:(){setState((){q++;answered=false;selectedAnswer=null;});if(q==5){save(points*10);completeStage(points>=5?3:points>=3?2:0);}},child:Text(tr(widget.lang,'next')))]);}
 }
 
 
@@ -363,6 +365,11 @@ class _GameCard3DState extends State<GameCard3D>
     super.dispose();
   }
 
+  void _activate() {
+    HapticFeedback.selectionClick();
+    widget.onTap();
+  }
+
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: controller,
@@ -377,7 +384,7 @@ class _GameCard3DState extends State<GameCard3D>
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
-        onTap: widget.onTap,
+        onTap: _activate,
         child: Ink(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -432,7 +439,7 @@ class _GameCard3DState extends State<GameCard3D>
                 SizedBox(
                   height: 35,
                   child: FilledButton.icon(
-                    onPressed: widget.onTap,
+                    onPressed: _activate,
                     icon: const Icon(Icons.play_arrow_rounded, size: 19),
                     label: Text(
                       widget.playLabel,
