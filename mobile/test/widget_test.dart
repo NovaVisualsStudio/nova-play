@@ -383,7 +383,7 @@ void main() {
     expect(find.text('PAC-MAN'), findsOneWidget);
     expect(find.text('الأرواح'), findsOneWidget);
     expect(find.text('ابدأ اللعب'), findsOneWidget);
-    expect(find.textContaining('اجمع النقاط'), findsOneWidget);
+    expect(find.textContaining('اجمع النقاط'), findsNWidgets(2));
     expect(find.byType(GridView), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -407,6 +407,22 @@ void main() {
     expect(find.text('ابدأ اللعب'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Pac-Man moves through the maze and awards pellet points', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: PacManGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.arrow_forward));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    expect(find.text('10'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.tap(find.text('إيقاف مؤقت'));
+    await tester.pump();
   });
 
   testWidgets('Pac-Man supports French and English labels', (tester) async {
