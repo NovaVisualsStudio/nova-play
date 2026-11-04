@@ -22,6 +22,34 @@ Future<void> openGame(
   await tester.ensureVisible(game);
   await tester.tap(game);
   await tester.pumpAndSettle();
+  testWidgets('Velocity Runner advances through its high-speed course without exceptions', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'en')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Ready to run?'));
+    await tester.pump();
+
+    final rightControl = find.byIcon(Icons.arrow_forward);
+    final gesture = await tester.startGesture(tester.getCenter(rightControl));
+    await tester.pump(const Duration(seconds: 7));
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('every home game card uses its own custom vector emblem', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+
+    final glyphs = find.byWidgetPredicate((widget) =>
+        widget is CustomPaint && widget.painter is ArcadeGameGlyph);
+    expect(glyphs, findsNWidgets(8));
+    expect(tester.takeException(), isNull);
+  });
+
 }
 
 void main() {
