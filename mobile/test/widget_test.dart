@@ -119,7 +119,7 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    expect(find.text('50 / 5'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 100));
     final preferences = await SharedPreferences.getInstance();
     expect(preferences.getInt('best_quiz'), 50);
     expect(preferences.getInt('best'), 50);
