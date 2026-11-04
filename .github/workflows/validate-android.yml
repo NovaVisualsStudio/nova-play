@@ -1,0 +1,84 @@
+name: Validate Android build (test signing only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [mobile-app]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/validate-android.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android platform project
+        run: flutter create --org com.novavisuals --project-name nova_play . --platforms android
+      - name: Resolve dependencies
+        run: flutter pub get
+      - name: Analyze source
+        run: flutter analyze --no-fatal-infos
+      - name: Run widget tests
+        run: flutter test --reporter expanded
+      - name: Set Play target API and app label (test build)
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          gradle = Path("android/app/build.gradle.kts")
+          if not gradle.exists():
+              raise SystemExit("Expected Gradle Kotlin DSL file was not generated.")
+          source = gradle.read_text()
+          source, count = re.subn(r"compileSdk\\s*=\\s*flutter\\.compileSdkVersion", "compileSdk = 36", source)
+          source, count2 = re.subn(r"targetSdk\\s*=\\s*flutter\\.targetSdkVersion", "targetSdk = 36", source)
+          if count != 1 or count2 != 1:
+              raise SystemExit(f"Could not enforce Android API 36 (compile replacements={count}, target replacements={count2}).")
+          gradle.write_text(source)
+          manifest = Path("android/app/src/main/AndroidManifest.xml")
+          if not manifest.exists():
+              raise SystemExit("AndroidManifest.xml was not generated.")
+          text = manifest.read_text()
+          text, label_count = re.subn(r'android:label="[^"]+"', 'android:label="NOVA PLAY"', text, count=1)
+          if label_count != 1:
+              raise SystemExit("Could not set NOVA PLAY launcher label.")
+          manifest.write_text(text)
+          print("Test build configured for target API 36 and NOVA PLAY label. Default debug signing is intentional.")
+          PY
+      - name: Build test APK (debug-signed; not for Play submission)
+        run: flutter build apk --release
+      - name: Build test App Bundle (debug-signed; not for Play submission)
+        run: flutter build appbundle --release
+      - name: Verify test package outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s build/app/outputs/flutter-apk/app-release.apk
+          test -s build/app/outputs/bundle/release/app-release.aab
+          APKANALYZER="$(find "$ANDROID_HOME/cmdline-tools" "$ANDROID_HOME/tools" -type f -name apkanalyzer 2>/dev/null | head -n 1 || true)"
+          if [[ -n "$APKANALYZER" ]]; then
+            TARGET="$("$APKANALYZER" manifest target-sdk build/app/outputs/flutter-apk/app-release.apk)"
+            echo "APK target SDK: $TARGET"
+            test "$TARGET" -ge 36
+          fi
+      - name: Upload test-only packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-play-test-build-NOT-FOR-PLAY
+          path: |
+            mobile/build/app/outputs/flutter-apk/app-release.apk
+            mobile/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 7
