@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nova_play/main.dart';
@@ -10,8 +12,8 @@ void main() {
   });
 
   testWidgets('home screen renders the NOVA PLAY arcade', (tester) async {
-    await tester.view.setPhysicalSize(const Size(800, 1000));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
@@ -24,8 +26,8 @@ void main() {
   });
 
   testWidgets('memory game opens and displays all twelve cards', (tester) async {
-    await tester.view.setPhysicalSize(const Size(800, 1000));
-    await tester.view.setDevicePixelRatio(1);
+    tester.view.physicalSize = const Size(800, 1000);
+    tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
