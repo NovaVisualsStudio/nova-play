@@ -86,7 +86,8 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
     if(x>=worldWidth-100){complete=true;score+=rings*100;_pause();}
     camera=(x-130).clamp(0,worldWidth-360).toDouble();if(mounted)setState((){});jumping=false;
   }
-  void _dash(){if(paused||dead||complete||dashCooldown>0)return;setState((){final direction=right?1.0:left?-1.0:(vx<0?-1.0:1.0);vx=direction*780;vy=0;dashTimer=.24;dashCooldown=1.35;invulnerable=.28;score+=5;});}\n  void _hold(String a,bool v){setState((){if(a=='left')left=v;if(a=='right')right=v;if(a=='jump'){jumping=v;if(v)jumpBuffer=.13;}if(a=='roll')rolling=v;});}
+  void _dash(){if(paused||dead||complete||dashCooldown>0)return;setState((){final direction=right?1.0:left?-1.0:(vx<0?-1.0:1.0);vx=direction*780;vy=0;dashTimer=.24;dashCooldown=1.35;invulnerable=.28;score+=5;});}
+  void _hold(String a,bool v){setState((){if(a=='left')left=v;if(a=='right')right=v;if(a=='jump'){jumping=v;if(v)jumpBuffer=.13;}if(a=='roll')rolling=v;});}
   void _resetAndPause(){_pause();setState(_reset);}
   @override void dispose(){_timer?.cancel();super.dispose();}
 
@@ -115,7 +116,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   Widget _control(IconData icon,VoidCallback down,VoidCallback up,{Color color=const Color(0xFF6E69E8)})=>GestureDetector(onTapDown:(_)=>down(),onTapUp:(_)=>up(),onTapCancel:up,child:Container(width:58,height:58,decoration:BoxDecoration(color:color.withOpacity(.88),borderRadius:BorderRadius.circular(18),border:Border.all(color:Colors.white54),boxShadow:const [BoxShadow(color:Colors.black38,blurRadius:8,offset:Offset(0,4))]),child:Icon(icon,color:Colors.white,size:30)));
 }
 
-class _RunnerPainter extends CustomPainter{\n  double vxDirection(double _) => 1.0;
+class _RunnerPainter extends CustomPainter{
   static const double groundY=330;
   final double camera,playerX,playerY,worldWidth,loopProgress,dashDirection;final List<Offset> rings,enemies;final Set<int> collected,defeated;final List<Rect> hazards,platforms,springs;final bool invulnerable,inLoop,shield,dashActive;final int stage;
   _RunnerPainter({required this.camera,required this.playerX,required this.playerY,required this.rings,required this.collected,required this.hazards,required this.platforms,required this.springs,required this.enemies,required this.defeated,required this.worldWidth,required this.invulnerable,required this.inLoop,required this.loopProgress,required this.shield,required this.dashActive,required this.dashDirection,required this.stage});
@@ -135,7 +136,8 @@ class _RunnerPainter extends CustomPainter{\n  double vxDirection(double _) => 1
     for(final h in hazards){final path=Path()..moveTo(h.left,h.bottom)..lineTo(h.center.dx,h.top)..lineTo(h.right,h.bottom)..close();canvas.drawPath(path,Paint()..color=const Color(0xFFEAF4F7));canvas.drawLine(Offset(h.left,h.bottom),Offset(h.right,h.bottom),Paint()..color=Colors.redAccent..strokeWidth=3);}
     for(final s in springs){canvas.drawRRect(RRect.fromRectAndRadius(s,const Radius.circular(4)),Paint()..color=const Color(0xFFE83E62));canvas.drawLine(Offset(s.left+4,s.top),Offset(s.right-4,s.top),Paint()..color=Colors.white..strokeWidth=3);}
     for(var i=0;i<enemies.length;i++){if(defeated.contains(i))continue;final e=enemies[i];final bob=math.sin((playerX/60)+i)*5;final center=Offset(e.dx,e.dy+bob);canvas.drawCircle(center,15,Paint()..color=const Color(0xFFCF4B42));canvas.drawCircle(center.translate(-5,-3),3,Paint()..color=Colors.white);canvas.drawCircle(center.translate(5,-3),3,Paint()..color=Colors.white);canvas.drawLine(center.translate(-8,12),center.translate(8,12),Paint()..color=const Color(0xFF4B2730)..strokeWidth=3);}
-    if(shield)canvas.drawCircle(Offset(playerX,playerY+18),32,Paint()..color=const Color(0xFF4DD9FF)..style=PaintingStyle.stroke..strokeWidth=4);\n    if(dashActive){final trail=Paint()..color=const Color(0xFF8CEBFF).withOpacity(.78)..strokeWidth=5..strokeCap=StrokeCap.round;for(var i=0;i<4;i++){final yy=playerY+7+i*8.0;canvas.drawLine(Offset(playerX-dashDirection*(26+i*9),yy),Offset(playerX-dashDirection*(8+i*8),yy),trail);}}
+    if(shield)canvas.drawCircle(Offset(playerX,playerY+18),32,Paint()..color=const Color(0xFF4DD9FF)..style=PaintingStyle.stroke..strokeWidth=4);
+    if(dashActive){final trail=Paint()..color=const Color(0xFF8CEBFF).withOpacity(.78)..strokeWidth=5..strokeCap=StrokeCap.round;for(var i=0;i<4;i++){final yy=playerY+7+i*8.0;canvas.drawLine(Offset(playerX-dashDirection*(26+i*9),yy),Offset(playerX-dashDirection*(8+i*8),yy),trail);}}
     final body=Paint()..color=const Color(0xFF087DE0),dark=Paint()..color=const Color(0xFF064B9B);canvas.drawOval(Rect.fromCenter(center:Offset(playerX,playerY+18),width:36,height:43),body);canvas.drawCircle(Offset(playerX+9,playerY+6),5,Paint()..color=Colors.white);canvas.drawCircle(Offset(playerX+11,playerY+6),2.3,Paint()..color=Colors.black);canvas.drawOval(Rect.fromLTWH(playerX-24,playerY+30,25,9),dark);canvas.drawOval(Rect.fromLTWH(playerX+1,playerY+30,25,9),dark);
     if(inLoop){final marker=Paint()..color=const Color(0xFFFFE16A)..strokeWidth=3;canvas.drawLine(Offset(1450,groundY-35),Offset(1472,groundY-55),marker);}
     if(invulnerable)canvas.drawCircle(Offset(playerX,playerY+18),29,Paint()..color=Colors.white.withOpacity(.35)..style=PaintingStyle.stroke..strokeWidth=3);canvas.restore();
