@@ -248,8 +248,15 @@ void main() {
       expect(pair.length, 2);
     }
 
-    // The discovery taps above have already matched every pair. Do not tap
-    // matched cards again: the completion dialog intentionally blocks input.
+    // Match the discovered pairs explicitly. The first pass only reveals
+    // the randomized layout; it does not count as completing the game.
+    for (final pair in positions.values) {
+      await tester.tap(cards.at(pair[0]));
+      await tester.pump();
+      await tester.tap(cards.at(pair[1]));
+      await tester.pumpAndSettle();
+    }
+
     // The completion overlay intentionally replaces the in-game HUD.
     expect(find.text('مرحلة مكتملة!'), findsOneWidget);
     await tester.tap(find.text('متابعة'));
