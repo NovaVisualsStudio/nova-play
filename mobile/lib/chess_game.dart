@@ -18,6 +18,7 @@ class _ChessGamePageState extends State<ChessGamePage> {
   int? selected;
   int coins = 0;
   bool thinking = false;
+  int _gameEpoch = 0;
   static const values = <int, int>{1: 100, 2: 320, 3: 335, 4: 500, 5: 900, 6: 20000};
 
   String t(String ar, String fr, String en) => widget.lang == 'ar' ? ar : widget.lang == 'fr' ? fr : en;
@@ -73,8 +74,10 @@ class _ChessGamePageState extends State<ChessGamePage> {
 
   Future<void> _computerMove() async {
     if (!mounted || game.isFinished) return;
+    final epoch = _gameEpoch;
     setState(() { thinking = true; });
     await Future<void>.delayed(const Duration(milliseconds: 120));
+    if (!mounted || epoch != _gameEpoch || game.isFinished) return;
     final moves = List<chess.Move>.of(game.legalMoves)..shuffle(random);
     chess.Move? bestMove;
     var bestScore = -1000000;
@@ -154,6 +157,7 @@ class _ChessGamePageState extends State<ChessGamePage> {
   }
 
   void _newGame() {
+    _gameEpoch++;
     setState(() { game = chess.Game(); history.clear(); selected = null; thinking = false; });
   }
 
