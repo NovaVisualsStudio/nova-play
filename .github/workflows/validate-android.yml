@@ -42,8 +42,8 @@ jobs:
           if not gradle.exists():
               raise SystemExit("Expected Gradle Kotlin DSL file was not generated.")
           source = gradle.read_text()
-          source, count = re.subn(r"compileSdk\\s*=\\s*flutter\\.compileSdkVersion", "compileSdk = 36", source)
-          source, count2 = re.subn(r"targetSdk\\s*=\\s*flutter\\.targetSdkVersion", "targetSdk = 36", source)
+          source, count = re.subn(r"compileSdk\s*=\s*flutter\.compileSdkVersion", "compileSdk = 36", source)
+          source, count2 = re.subn(r"targetSdk\s*=\s*flutter\.targetSdkVersion", "targetSdk = 36", source)
           if count != 1 or count2 != 1:
               raise SystemExit(f"Could not enforce Android API 36 (compile replacements={count}, target replacements={count2}).")
           gradle.write_text(source)
