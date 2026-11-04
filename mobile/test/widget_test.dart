@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nova_play/main.dart';
 import 'package:nova_play/snake_game.dart';
 import 'package:nova_play/chess_game.dart';
+import 'package:nova_play/pacman_game.dart';
 
 void configurePhoneViewport(WidgetTester tester) {
   tester.view.physicalSize = const Size(393, 873);
