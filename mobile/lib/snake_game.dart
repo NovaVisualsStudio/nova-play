@@ -29,7 +29,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> with WidgetsBindingObserv
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed || !started || paused || over) return;
     timer?.cancel();
-    if (mounted) setState(() => paused = true);
+    if (mounted) setState(() { started = false; paused = true; });
   }
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
@@ -132,9 +132,13 @@ class _SnakeGamePageState extends State<SnakeGamePage> with WidgetsBindingObserv
     });
   }
   void _pause() {
-    if (!started || over) return;
-    setState(() => paused = !paused);
-    if (paused) { timer?.cancel(); } else { timer = Timer.periodic(Duration(milliseconds: speed), (_) => _tick()); }
+    if ((!started && !paused) || over) return;
+    setState(() { paused = !paused; started = !paused; });
+    if (paused) {
+      timer?.cancel();
+    } else {
+      timer = Timer.periodic(Duration(milliseconds: speed), (_) => _tick());
+    }
   }
   Widget _stat(String label, String value, IconData icon) => Expanded(child: Container(
     padding: const EdgeInsets.all(9),
