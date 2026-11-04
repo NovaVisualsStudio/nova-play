@@ -92,6 +92,9 @@ void main() {
       await tester.pump();
     }
     await tester.pumpAndSettle();
+    expect(find.text('مرحلة مكتملة!'), findsOneWidget);
+    await tester.tap(find.text('متابعة'));
+    await tester.pumpAndSettle();
     expect(find.text('العب مجدداً'), findsOneWidget);
   });
 
