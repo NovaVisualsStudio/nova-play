@@ -27,11 +27,11 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   void _pause(){if(!mounted)return;setState(()=>paused=true);}
   void _reset(){x=60;y=groundY-42;vx=0;vy=0;camera=0;rings=0;lives=3;score=0;collected.clear();broken.clear();grounded=true;dead=false;complete=false;invulnerable=0;jumpBuffer=0;coyote=0;}
   void _step(double dt){
-    if(!mounted||paused||dead||complete)return;dt=dt.clamp(0.0,0.033);final oldY=y;
+    if(!mounted||paused||dead||complete)return;dt=dt.clamp(0.0,0.033).toDouble();final oldY=y;
     const accel=1450.0,maxSpeed=520.0,friction=900.0;
     if(left)vx-=accel*dt;if(right)vx+=accel*dt;
     if(!left&&!right&&grounded)vx=vx.abs()<friction*dt?0:vx-vx.sign*friction*dt;
-    vx=vx.clamp(-maxSpeed,maxSpeed);
+    vx=vx.clamp(-maxSpeed,maxSpeed).toDouble();
     if(jumpBuffer>0)jumpBuffer-=dt;if(coyote>0)coyote-=dt;if(invulnerable>0)invulnerable-=dt;
     if(jumping)jumpBuffer=.13;
     if(jumpBuffer>0&&(grounded||coyote>0)){vy=-650;grounded=false;jumpBuffer=0;coyote=0;}
@@ -46,9 +46,9 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
     final player=Rect.fromCenter(center:Offset(x,y+18),width:36,height:42);
     for(final h in hazards){if(player.overlaps(h)&&invulnerable<=0){if(rings>0){rings=0;invulnerable=1.6;vx=-vx.sign*260;vy=-300;}else{lives--;invulnerable=1.6;vx=-vx.sign*220;vy=-320;if(lives<=0){dead=true;_pause();}}}}
     if(x<20){x=20;vx=0;}
-    if(y>600){lives--;if(lives<=0){dead=true;_pause();}else{x=math.max(60,x-180);y=groundY-42;vy=0;rings=0;invulnerable=1.5;}}
+    if(y>600){lives--;if(lives<=0){dead=true;_pause();}else{x=math.max(60,x-180).toDouble();y=groundY-42;vy=0;rings=0;invulnerable=1.5;}}
     if(x>=worldWidth-100){complete=true;score+=rings*100;_pause();}
-    camera=(x-130).clamp(0,worldWidth-360);if(mounted)setState((){});jumping=false;
+    camera=(x-130).clamp(0,worldWidth-360).toDouble();if(mounted)setState((){});jumping=false;
   }
   void _hold(String a,bool v){setState((){if(a=='left')left=v;if(a=='right')right=v;if(a=='jump'){jumping=v;if(v)jumpBuffer=.13;}if(a=='roll')rolling=v;});}
   void _resetAndPause(){_pause();setState(_reset);}
