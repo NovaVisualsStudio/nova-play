@@ -44,6 +44,8 @@ void main() {
     await preferences.setInt('best', 123);
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, 1000));
+    await tester.pumpAndSettle();
 
     expect(find.text('أفضل نتيجة: 123'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -142,7 +144,7 @@ void main() {
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
-    await tester.tap(find.byType(GestureDetector).last);
+    await tester.tap(find.byKey(const ValueKey('quick-tap-target')));
     await tester.pump();
     expect(find.text('2'), findsOneWidget);
     expect(find.text('8 s'), findsOneWidget);
@@ -156,11 +158,11 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.arrow_upward));
     await tester.pump();
-    expect(find.byIcon(Icons.pause), findsOneWidget);
+    expect(find.text('إيقاف مؤقت'), findsOneWidget);
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
-    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+    expect(find.text('ابدأ اللعب'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
