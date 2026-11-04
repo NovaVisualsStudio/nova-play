@@ -11,7 +11,7 @@ class SonicRunnerPage extends StatefulWidget {
 
 class _SonicRunnerPageState extends State<SonicRunnerPage> {
   static const double groundY = 330;
-  double get worldWidth => 4200 + (stage-1)*420;
+  double get worldWidth => 4200.0 + (stage-1)*420.0;
   Timer? _timer;
   double x=60, y=groundY-42, vx=0, vy=0, camera=0, jumpBuffer=0, coyote=0, invulnerable=0, loopProgress=0, enemyClock=0;
   int stage=1, defeatedEnemies=0;
@@ -20,8 +20,8 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   int rings=0, lives=3, score=0;
   final Set<int> collected={}, broken={};
   List<Offset> get ringPoints => List<Offset>.generate(45+stage*4,(i)=>Offset(180+i*(stage==1?86.0:78.0),groundY-40-(i%3)*22.0));
-  List<Rect> get hazards => [650.0,1120.0,1750.0,2520.0,3280.0].asMap().entries.map((e)=>Rect.fromLTWH(e.value+(stage-1)*45,groundY-24,e.key==2||e.key==4?68:34,24)).toList();
-  List<Rect> get platforms => [const Rect.fromLTWH(850,245,230,18),const Rect.fromLTWH(1370,210,250,18),const Rect.fromLTWH(2100,250,250,18),const Rect.fromLTWH(2800,215,250,18)].map((p)=>p.shift(Offset((stage-1)*55,(stage-1)*-10))).toList();
+  List<Rect> get hazards => [650.0,1120.0,1750.0,2520.0,3280.0].asMap().entries.map((e)=>Rect.fromLTWH(e.value+(stage-1)*45.0,groundY-24,e.key==2||e.key==4?68:34,24)).toList();
+  List<Rect> get platforms => [const Rect.fromLTWH(850,245,230,18),const Rect.fromLTWH(1370,210,250,18),const Rect.fromLTWH(2100,250,250,18),const Rect.fromLTWH(2800,215,250,18)].map((p)=>p.shift(Offset((stage-1)*55.0,(stage-1)*-10.0))).toList();
   final springs=<Rect>[const Rect.fromLTWH(980,groundY-16,34,16),const Rect.fromLTWH(1900,groundY-16,34,16),const Rect.fromLTWH(3000,groundY-16,34,16)];
   final enemyBases=<Offset>[const Offset(760,groundY-24),const Offset(1220,groundY-24),const Offset(2360,groundY-24),const Offset(3140,groundY-24)];
   final Set<int> defeated={};
