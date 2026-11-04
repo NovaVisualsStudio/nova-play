@@ -243,10 +243,10 @@ Widget build(BuildContext c) {
     child: Scaffold(
       appBar: AppBar(
         title: Row(mainAxisSize: MainAxisSize.min, children: [Hero(tag: 'nova-art-\${widget.game.id}', child: GameArtwork(gameId: widget.game.id, width: 42)), const SizedBox(width: 9), Flexible(child: Text(tr(widget.lang, widget.game.id), maxLines: 1, overflow: TextOverflow.ellipsis))]),
-        leading: IconButton(onPressed: () => Navigator.pop(c), icon: const Icon(Icons.arrow_back)),
+        leading: IconButton(tooltip: tr(widget.lang, 'رجوع', 'Retour', 'Back'), onPressed: () => Navigator.pop(c), icon: const Icon(Icons.arrow_back)),
         actions: [
-          IconButton(tooltip: 'Stages & rewards', onPressed: showStages, icon: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFC857))),
-          IconButton(onPressed: reset, icon: const Icon(Icons.refresh)),
+          IconButton(tooltip: tr(widget.lang, 'المراحل والمكافآت', 'Niveaux et récompenses', 'Stages & rewards'), onPressed: showStages, icon: const Icon(Icons.emoji_events_rounded, color: Color(0xFFFFC857))),
+          IconButton(tooltip: tr(widget.lang, 'إعادة اللعبة', 'Recommencer', 'Restart game'), onPressed: reset, icon: const Icon(Icons.refresh)),
         ],
       ),
       body: SafeArea(

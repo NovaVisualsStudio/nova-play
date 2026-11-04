@@ -106,7 +106,18 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> with WidgetsBindingOb
     return Directionality(textDirection:lang=='ar'?TextDirection.rtl:TextDirection.ltr,child:Scaffold(
       backgroundColor:const Color(0xFF07172C),
       appBar:AppBar(title:Row(mainAxisSize:MainAxisSize.min,children:[Hero(tag:'nova-art-sonic',child:GameArtwork(gameId:'sonic',width:42)),const SizedBox(width:9),const Flexible(child:Text('VELOCITY RUNNER',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:1)))]),backgroundColor:const Color(0xFF102C4C),
-        actions:[IconButton(onPressed:_resetAndPause,icon:const Icon(Icons.refresh)),IconButton(onPressed:paused?_start:_pause,icon:Icon(paused?Icons.play_arrow:Icons.pause))]),
+        actions:[
+          IconButton(
+            tooltip:t('إعادة المرحلة','Réinitialiser','Restart stage'),
+            onPressed:_resetAndPause,
+            icon:const Icon(Icons.refresh),
+          ),
+          IconButton(
+            tooltip:paused?t('استئناف','Reprendre','Resume'):t('إيقاف مؤقت','Pause','Pause'),
+            onPressed:paused?_start:_pause,
+            icon:Icon(paused?Icons.play_arrow:Icons.pause),
+          ),
+        ]),
       body:SafeArea(child:Column(children:[
         Padding(padding:const EdgeInsets.symmetric(horizontal:14,vertical:8),child:Row(mainAxisAlignment:MainAxisAlignment.spaceAround,children:[
           _stat('💍 '+rings.toString(),t('الحلقات','Anneaux','Rings')),_stat('❤️ '+lives.toString(),t('الأرواح','Vies','Lives')),
@@ -116,15 +127,45 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> with WidgetsBindingOb
           if(paused||dead||complete)Positioned.fill(child:Container(color:Colors.black.withOpacity(.58),child:Center(child:Column(mainAxisSize:MainAxisSize.min,children:[
             Text(dead?t('انتهت المحاولة','Partie terminée','Game over'):complete?(stage==3?t('أنهيت جميع المراحل!','Tous les niveaux terminés !','All stages complete!'):t('أكملت المرحلة!','Niveau terminé !','Stage complete!')):t('مستعد للانطلاق؟','Prêt à courir ?','Ready to run?'),style:const TextStyle(fontSize:26,fontWeight:FontWeight.w900,color:Colors.white)),
             const SizedBox(height:12),FilledButton.icon(onPressed:complete?_nextStage:_start,icon:const Icon(Icons.play_arrow),label:Text(complete?(stage==3?t('إعادة جميع المراحل','Recommencer','Restart all'):t('المرحلة التالية','Niveau suivant','Next stage')):t('ابدأ اللعب','Jouer','Play')))])))),
-          Positioned(left:12,bottom:12,child:Row(children:[_control(Icons.arrow_back,()=>_hold('left',true),()=>_hold('left',false)),const SizedBox(width:8),_control(Icons.arrow_forward,()=>_hold('right',true),()=>_hold('right',false))])),
-          Positioned(right:12,bottom:12,child:Row(children:[_control(Icons.south,()=>_hold('roll',true),()=>_hold('roll',false),color:const Color(0xFFEF9B35)),const SizedBox(width:8),_control(Icons.bolt,_dash,_dash,color:const Color(0xFFFFC247)),const SizedBox(width:8),_control(Icons.arrow_upward,()=>_hold('jump',true),()=>_hold('jump',false),color:const Color(0xFF27C7E7))]))
+          Positioned(left:12,bottom:12,child:Row(children:[_control(Icons.arrow_back,()=>_hold('left',true),()=>_hold('left',false),label:t('يسار','Gauche','Move left')),const SizedBox(width:8),_control(Icons.arrow_forward,()=>_hold('right',true),()=>_hold('right',false),label:t('يمين','Droite','Move right'))])),
+          Positioned(right:12,bottom:12,child:Row(children:[_control(Icons.south,()=>_hold('roll',true),()=>_hold('roll',false),label:t('انزلاق','Glissade','Slide'),color:const Color(0xFFEF9B35)),const SizedBox(width:8),_control(Icons.bolt,_dash,_dash,label:t('اندفاع','Ruée','Dash'),color:const Color(0xFFFFC247)),const SizedBox(width:8),_control(Icons.arrow_upward,()=>_hold('jump',true),()=>_hold('jump',false),label:t('قفز','Sauter','Jump'),color:const Color(0xFF27C7E7))]))
         ])))),
         Padding(padding:const EdgeInsets.all(8),child:Text(t('اجمع الحلقات، اقفز فوق الأشواك، وحافظ على سرعتك.','Ramassez les anneaux, sautez les pics et gardez votre vitesse.','Collect rings, jump over spikes and keep your momentum.'),textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,fontSize:12)))
       ]))));
   }
   Widget _stat(String value,String label)=>Column(children:[Text(value,style:const TextStyle(fontWeight:FontWeight.w900,color:Colors.white)),Text(label,style:const TextStyle(fontSize:10,color:Colors.white70))]);
   Rect playerRect(double px,double py)=>Rect.fromCenter(center:Offset(px,py+18),width:rolling?29:36,height:rolling?29:42);
-  Widget _control(IconData icon,VoidCallback down,VoidCallback up,{Color color=const Color(0xFF6E69E8)})=>GestureDetector(onTapDown:(_)=>down(),onTapUp:(_)=>up(),onTapCancel:up,child:Container(width:58,height:58,decoration:BoxDecoration(color:color.withOpacity(.88),borderRadius:BorderRadius.circular(18),border:Border.all(color:Colors.white54),boxShadow:const [BoxShadow(color:Colors.black38,blurRadius:8,offset:Offset(0,4))]),child:Icon(icon,color:Colors.white,size:30)));
+  Widget _control(
+    IconData icon,
+    VoidCallback down,
+    VoidCallback up, {
+    required String label,
+    Color color = const Color(0xFF6E69E8),
+  }) => Tooltip(
+    message: label,
+    child: Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTapDown: (_) => down(),
+        onTapUp: (_) => up(),
+        onTapCancel: up,
+        child: Container(
+          width: 58,
+          height: 58,
+          decoration: BoxDecoration(
+            color: color.withOpacity(.88),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white54),
+            boxShadow: const [
+              BoxShadow(color: Colors.black38, blurRadius: 8, offset: Offset(0, 4)),
+            ],
+          ),
+          child: Icon(icon, color: Colors.white, size: 30),
+        ),
+      ),
+    ),
+  );
 }
 
 class _RunnerPainter extends CustomPainter{
