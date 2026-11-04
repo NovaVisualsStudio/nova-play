@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'game_artwork.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chess_on_dart/chess_on_dart.dart' as chess;
 
@@ -173,7 +174,7 @@ class _ChessGamePageState extends State<ChessGamePage> {
     textDirection: widget.lang == 'ar' ? TextDirection.rtl : TextDirection.ltr,
     child: Scaffold(
       backgroundColor: const Color(0xFF090D1B),
-      appBar: AppBar(title: Text(t('الشطرنج','Échecs','Chess')), actions: [
+      appBar: AppBar(title: Row(mainAxisSize: MainAxisSize.min, children: [GameArtwork(gameId: 'chess', width: 42), const SizedBox(width: 9), Text(t('الشطرنج','Échecs','Chess'))]), actions: [
         IconButton(onPressed: _undo, icon: const Icon(Icons.undo), tooltip: t('تراجع','Annuler','Undo')),
         IconButton(onPressed: _newGame, icon: const Icon(Icons.refresh), tooltip: t('مباراة جديدة','Nouvelle partie','New game')),
       ]),
