@@ -329,4 +329,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('tic-tac-toe computer blocks an immediate winning line', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'تحدي إكس أو');
+
+    final cells = find.descendant(
+      of: find.byType(GridView),
+      matching: find.byType(GestureDetector),
+    );
+    await tester.tap(cells.at(0));
+    await tester.pumpAndSettle();
+    await tester.tap(cells.at(2));
+    await tester.pumpAndSettle();
+
+    expect(find.descendant(of: cells.at(1), matching: find.text('O')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
