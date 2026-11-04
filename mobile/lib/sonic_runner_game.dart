@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'game_artwork.dart';
 
 class SonicRunnerPage extends StatefulWidget {
   final String lang;
@@ -97,7 +98,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   @override Widget build(BuildContext context){
     return Directionality(textDirection:lang=='ar'?TextDirection.rtl:TextDirection.ltr,child:Scaffold(
       backgroundColor:const Color(0xFF07172C),
-      appBar:AppBar(title:const Text('VELOCITY RUNNER',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:1)),backgroundColor:const Color(0xFF102C4C),
+      appBar:AppBar(title:Row(mainAxisSize:MainAxisSize.min,children:[GameArtwork(gameId:'sonic',width:42),const SizedBox(width:9),const Flexible(child:Text('VELOCITY RUNNER',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:1)))]),backgroundColor:const Color(0xFF102C4C),
         actions:[IconButton(onPressed:_resetAndPause,icon:const Icon(Icons.refresh)),IconButton(onPressed:paused?_start:_pause,icon:Icon(paused?Icons.play_arrow:Icons.pause))]),
       body:SafeArea(child:Column(children:[
         Padding(padding:const EdgeInsets.symmetric(horizontal:14,vertical:8),child:Row(mainAxisAlignment:MainAxisAlignment.spaceAround,children:[
