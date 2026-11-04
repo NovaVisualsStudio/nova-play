@@ -282,4 +282,51 @@ void main() {
     expect(find.text('متوسط'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('chess rejects an illegal move and completes a legal player/computer turn', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: ChessGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+
+    final squares = find.descendant(
+      of: find.byType(GridView),
+      matching: find.byType(GestureDetector),
+    );
+    // Board indices: e2 = 52, e5 = 28. A pawn cannot move three squares.
+    await tester.tap(squares.at(52));
+    await tester.pump();
+    await tester.tap(squares.at(28));
+    await tester.pumpAndSettle();
+    expect(find.text('النقلات: 0'), findsOneWidget);
+    expect(find.text('دورك — الأبيض'), findsOneWidget);
+
+    // e2-e4 is legal. The computer must answer, returning the turn to White.
+    await tester.tap(squares.at(52));
+    await tester.pump();
+    await tester.tap(squares.at(36));
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(find.text('النقلات: 2'), findsOneWidget);
+    expect(find.text('دورك — الأبيض'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('snake starts, pauses, resumes and resets without exceptions', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SnakeGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('ابدأ اللعب'));
+    await tester.pump();
+    expect(find.text('إيقاف مؤقت'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('إيقاف مؤقت'));
+    await tester.pump();
+    expect(find.text('اللعبة متوقفة مؤقتاً'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(find.text('ابدأ اللعب'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
