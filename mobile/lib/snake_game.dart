@@ -11,7 +11,7 @@ class SnakeGamePage extends StatefulWidget {
   State<SnakeGamePage> createState() => _SnakeGamePageState();
 }
 
-class _SnakeGamePageState extends State<SnakeGamePage> {
+class _SnakeGamePageState extends State<SnakeGamePage> with WidgetsBindingObserver {
   static const n = 18;
   final rng = Random();
   final snake = <Point<int>>[const Point(8, 9), const Point(7, 9), const Point(6, 9)];
@@ -23,7 +23,13 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
   String tr(String a, String f, String e) => widget.lang == 'ar' ? a : widget.lang == 'fr' ? f : e;
 
   @override
-  void initState() { super.initState(); _load(); _food(); }
+  void initState() { super.initState(); WidgetsBinding.instance.addObserver(this); _load(); _food(); }
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed || !started || paused || over) return;
+    timer?.cancel();
+    if (mounted) setState(() => paused = true);
+  }
   Future<void> _load() async {
     final p = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -138,7 +144,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
     onPressed: () => _turn(d), child: Icon(icon),
   ));
   @override
-  void dispose() { timer?.cancel(); super.dispose(); }
+  void dispose() { WidgetsBinding.instance.removeObserver(this); timer?.cancel(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) => Directionality(
