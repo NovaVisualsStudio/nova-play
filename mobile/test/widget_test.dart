@@ -71,7 +71,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('1'), findsOneWidget);
-    expect(find.text('10 s'), findsNothing);
+    expect(find.text('10 s'), findsOneWidget);
   });
 
   testWidgets('quiz game displays its first question and answers', (tester) async {
