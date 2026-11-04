@@ -414,7 +414,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: PacManGamePage(lang: 'ar')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.arrow_forward));
+    await tester.tap(find.byIcon(Icons.arrow_downward));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 200));
 
