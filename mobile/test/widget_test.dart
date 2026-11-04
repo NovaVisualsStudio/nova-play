@@ -348,4 +348,23 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('snake ends on a wall collision and records the best score', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SnakeGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+
+    // The snake starts at row 9; repeated upward turns must eventually hit row 0.
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+    for (var i = 0; i < 12; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    await tester.pumpAndSettle();
+
+    expect(find.text('انتهت اللعبة!'), findsOneWidget);
+    final preferences = await SharedPreferences.getInstance();
+    expect(preferences.getInt('best_snake'), isNotNull);
+    expect(tester.takeException(), isNull);
+  });
+
 }
