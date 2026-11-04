@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'game_artwork.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -87,6 +88,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> with WidgetsBindingObserv
   }
   void _turn(Point<int> d) {
     if (d.x == -dir.x && d.y == -dir.y) return;
+    HapticFeedback.selectionClick();
     nextDir = d;
     if (!started) _start();
   }
