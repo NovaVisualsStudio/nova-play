@@ -440,4 +440,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Velocity Runner opens with HUD and touch controls', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'ar')));
+    await tester.pumpAndSettle();
+    expect(find.text('VELOCITY RUNNER'), findsOneWidget);
+    expect(find.text('الحلقات'), findsOneWidget);
+    expect(find.text('الأرواح'), findsOneWidget);
+    expect(find.text('ابدأ اللعب'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_forward), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Velocity Runner starts, pauses and resets without exceptions', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'ar')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('ابدأ اللعب'));
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byIcon(Icons.pause), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.pause));
+    await tester.pump();
+    expect(find.text('مستعد للانطلاق؟'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.pumpAndSettle();
+    expect(find.text('مستعد للانطلاق؟'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }
