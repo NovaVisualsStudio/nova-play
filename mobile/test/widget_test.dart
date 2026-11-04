@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:nova_play/main.dart';
+import 'package:nova_play/snake_game.dart';
 
 void configurePhoneViewport(WidgetTester tester) {
   tester.view.physicalSize = const Size(393, 873);
