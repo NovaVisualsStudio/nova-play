@@ -27,7 +27,7 @@ Future<void> openGame(
     await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'en')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Ready to run?'));
+    await tester.tap(find.text('Play'));
     await tester.pump();
 
     final rightControl = find.byIcon(Icons.arrow_forward);
@@ -41,12 +41,20 @@ Future<void> openGame(
 
   testWidgets('every home game card uses its own custom vector emblem', (tester) async {
     configurePhoneViewport(tester);
-    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpWidget(MaterialApp(
+      home: Wrap(children: [
+        for (final id in ['xo','memory','quick','quiz','snake','chess','pacman','sonic'])
+          SizedBox(width: 48, height: 48, child: CustomPaint(painter: ArcadeGameGlyph(id))),
+      ]),
+    ));
     await tester.pumpAndSettle();
 
     final glyphs = find.byWidgetPredicate((widget) =>
         widget is CustomPaint && widget.painter is ArcadeGameGlyph);
     expect(glyphs, findsNWidgets(8));
+    final ids = tester.widgetList<CustomPaint>(glyphs)
+        .map((widget) => (widget.painter as ArcadeGameGlyph).id).toSet();
+    expect(ids.length, 8);
     expect(tester.takeException(), isNull);
   });
 
