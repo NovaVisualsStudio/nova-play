@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Eight individually addressable game illustrations cropped from the NOVA
-/// PLAY 4 × 2 atlas. Every crop preserves the atlas tile's native 4:3 ratio.
+/// Lightweight, resolution-independent game artwork.
+///
+/// The illustrations are drawn by Flutter itself, so the app no longer
+/// depends on a separately uploaded binary atlas asset.
 class GameArtwork extends StatelessWidget {
   final String gameId;
   final double width;
@@ -19,61 +21,18 @@ class GameArtwork extends StatelessWidget {
     'snake', 'chess', 'pacman', 'sonic',
   ];
 
-  int get _index => gameIds.indexOf(gameId);
-
   @override
-  Widget build(BuildContext context) {
-    final index = _index;
-    if (index < 0) {
-      return SizedBox(
+  Widget build(BuildContext context) => SizedBox(
         width: width,
         height: height ?? width * .75,
-        child: const Center(
-          child: Icon(Icons.videogame_asset_rounded, color: Colors.white70),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: _GameVisual(gameId: gameId),
         ),
       );
-    }
-
-    final column = index % 4;
-    final row = index ~/ 4;
-    final tileHeight = height ?? width * .75;
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
-        width: width,
-        height: tileHeight,
-        child: ClipRect(
-          child: Align(
-            alignment: Alignment(
-              column * (2 / 3) - 1,
-              row == 0 ? -1 : 1,
-            ),
-            widthFactor: .25,
-            heightFactor: .5,
-            child: Image.asset(
-              'assets/game_icons.webp',
-              width: width * 4,
-              height: tileHeight * 2,
-              fit: BoxFit.fill,
-              filterQuality: FilterQuality.high,
-              errorBuilder: (_, __, ___) => Container(
-                color: const Color(0xFF151C31),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.videogame_asset_rounded,
-                  color: Colors.white70,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
-/// Large, responsive game art for the home catalogue.
+/// Large responsive cover using the same vector artwork as the game tile.
 class GameCover extends StatelessWidget {
   final String gameId;
   final BorderRadius borderRadius;
@@ -85,73 +44,120 @@ class GameCover extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final index = GameArtwork.gameIds.indexOf(gameId);
-    if (index < 0) {
-      return AspectRatio(
+  Widget build(BuildContext context) => AspectRatio(
         aspectRatio: 4 / 3,
-        child: const Center(
-          child: Icon(Icons.videogame_asset_rounded, color: Colors.white70),
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: _GameVisual(gameId: gameId, large: true),
         ),
       );
-    }
-    final column = index % 4;
-    final row = index ~/ 4;
-    return AspectRatio(
-      aspectRatio: 4 / 3,
-      child: ClipRRect(
-        borderRadius: borderRadius,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                final height = constraints.maxHeight;
-                return ClipRect(
-                  child: Align(
-                    alignment: Alignment(
-                      column * (2 / 3) - 1,
-                      row == 0 ? -1 : 1,
-                    ),
-                    widthFactor: .25,
-                    heightFactor: .5,
-                    child: Image.asset(
-                      'assets/game_icons.webp',
-                      width: width * 4,
-                      height: height * 2,
-                      fit: BoxFit.fill,
-                      filterQuality: FilterQuality.high,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: const Color(0xFF151C31),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.videogame_asset_rounded,
-                          color: Colors.white70,
-                          size: 42,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
+}
+
+class _GameVisual extends StatelessWidget {
+  final String gameId;
+  final bool large;
+
+  const _GameVisual({required this.gameId, this.large = false});
+
+  static const _icons = <String, IconData>{
+    'xo': Icons.grid_3x3_rounded,
+    'memory': Icons.psychology_alt_rounded,
+    'quick': Icons.bolt_rounded,
+    'quiz': Icons.quiz_rounded,
+    'snake': Icons.route_rounded,
+    'chess': Icons.workspace_premium_rounded,
+    'pacman': Icons.circle,
+    'sonic': Icons.speed_rounded,
+  };
+
+  static const _colors = <String, List<Color>>{
+    'xo': [Color(0xFF153B66), Color(0xFF15172F)],
+    'memory': [Color(0xFF563A91), Color(0xFF211B49)],
+    'quick': [Color(0xFF9A4D16), Color(0xFF321B36)],
+    'quiz': [Color(0xFF126B70), Color(0xFF172B4D)],
+    'snake': [Color(0xFF236B45), Color(0xFF152D35)],
+    'chess': [Color(0xFF75521F), Color(0xFF29213A)],
+    'pacman': [Color(0xFF8B6514), Color(0xFF302044)],
+    'sonic': [Color(0xFF145DA0), Color(0xFF172044)],
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _colors[gameId] ?? const [Color(0xFF273653), Color(0xFF151C31)];
+    final icon = _icons[gameId] ?? Icons.videogame_asset_rounded;
+    final iconSize = large ? 62.0 : 27.0;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: colors,
             ),
-            const DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Color(0x12050A18),
-                    Color(0x44050A18),
-                  ],
+          ),
+        ),
+        CustomPaint(painter: _ArtworkPatternPainter(colors.last)),
+        Center(
+          child: Container(
+            width: large ? 112 : 48,
+            height: large ? 112 : 48,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .10),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withValues(alpha: .22)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: .22),
+                  blurRadius: large ? 24 : 10,
+                  spreadRadius: 1,
                 ),
+              ],
+            ),
+            child: Icon(icon, size: iconSize, color: Colors.white),
+          ),
+        ),
+        if (large)
+          Positioned(
+            left: 14,
+            bottom: 12,
+            child: Text(
+              gameId.toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2,
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
+}
+
+class _ArtworkPatternPainter extends CustomPainter {
+  final Color color;
+  const _ArtworkPatternPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withValues(alpha: .055);
+    canvas.drawCircle(Offset(size.width * .12, size.height * .18), size.width * .20, paint);
+    canvas.drawCircle(Offset(size.width * .91, size.height * .82), size.width * .29, paint);
+    final linePaint = Paint()
+      ..color = color.withValues(alpha: .28)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+    for (var i = -2; i < 7; i++) {
+      final x = i * size.width / 5;
+      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), linePaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ArtworkPatternPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
