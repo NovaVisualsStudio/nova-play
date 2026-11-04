@@ -79,7 +79,7 @@ class _SnakeGamePageState extends State<SnakeGamePage> {
     }
   }
   void _turn(Point<int> d) {
-    if (d.x == -nextDir.x && d.y == -nextDir.y) return;
+    if (d.x == -dir.x && d.y == -dir.y) return;
     nextDir = d;
     if (!started) _start();
   }
