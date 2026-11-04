@@ -10,7 +10,7 @@ class SonicRunnerPage extends StatefulWidget {
   State<SonicRunnerPage> createState() => _SonicRunnerPageState();
 }
 
-class _SonicRunnerPageState extends State<SonicRunnerPage> {
+class _SonicRunnerPageState extends State<SonicRunnerPage> with WidgetsBindingObserver {
   static const double groundY = 330;
   double get worldWidth => 4200.0 + (stage-1)*420.0;
   Timer? _timer;
@@ -29,9 +29,15 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   String t(String ar,String fr,String en)=>lang=='ar'?ar:lang=='fr'?fr:en;
   String get lang=>widget.lang;
 
+  @override
+  void initState(){super.initState();WidgetsBinding.instance.addObserver(this);}
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state){
+    if(state!=AppLifecycleState.resumed&&!paused&&!dead&&!complete){_pause();}
+  }
   void _start(){if(dead)_reset(preserveStage:true);if(!paused)return;setState(()=>paused=false);_timer??=Timer.periodic(const Duration(milliseconds:16),(_)=>_step(1/60));}
   void _nextStage(){final next=stage>=3?1:stage+1;_reset(preserveStage:true);setState(()=>stage=next);}
-  void _pause(){if(!mounted)return;setState(()=>paused=true);}
+  void _pause(){if(!mounted)return;_timer?.cancel();_timer=null;setState(()=>paused=true);}
   void _reset({bool preserveStage=false}){final currentStage=stage;x=60;y=groundY-42;vx=0;vy=0;camera=0;rings=0;lives=3;score=0;stage=preserveStage?currentStage:1;defeatedEnemies=0;collected.clear();broken.clear();defeated.clear();grounded=true;dead=false;complete=false;invulnerable=0;jumpBuffer=0;coyote=0;loopProgress=0;inLoop=false;loopUsed=false;shield=false;enemyClock=0;dashTimer=0;dashCooldown=0;}
   void _step(double dt){
     if(!mounted||paused||dead||complete)return;dt=dt.clamp(0.0,0.033).toDouble();final oldY=y;
@@ -93,7 +99,7 @@ class _SonicRunnerPageState extends State<SonicRunnerPage> {
   void _dash(){if(paused||dead||complete||dashCooldown>0)return;setState((){final direction=right?1.0:left?-1.0:(vx<0?-1.0:1.0);vx=direction*780;vy=0;dashTimer=.24;dashCooldown=1.35;invulnerable=.28;score+=5;});}
   void _hold(String a,bool v){setState((){if(a=='left')left=v;if(a=='right')right=v;if(a=='jump'){jumping=v;if(v)jumpBuffer=.13;}if(a=='roll')rolling=v;});}
   void _resetAndPause(){_pause();setState(_reset);}
-  @override void dispose(){_timer?.cancel();super.dispose();}
+  @override void dispose(){WidgetsBinding.instance.removeObserver(this);_timer?.cancel();super.dispose();}
 
   @override Widget build(BuildContext context){
     return Directionality(textDirection:lang=='ar'?TextDirection.rtl:TextDirection.ltr,child:Scaffold(
