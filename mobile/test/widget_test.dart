@@ -124,6 +124,46 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('quick tap countdown pauses safely while the app is backgrounded', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const NovaPlay());
+    await tester.pumpAndSettle();
+    await openGame(tester, 'سرعة الاستجابة');
+
+    await tester.tap(find.text('ابدأ'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 2));
+    expect(find.text('8 s'), findsOneWidget);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 3));
+    expect(find.text('8 s'), findsOneWidget);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.tap(find.byType(GestureDetector).last);
+    await tester.pump();
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('8 s'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Snake pauses its movement timer when app goes to background', (tester) async {
+    configurePhoneViewport(tester);
+    await tester.pumpWidget(const MaterialApp(home: SnakeGamePage(lang: 'ar')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.arrow_upward));
+    await tester.pump();
+    expect(find.byIcon(Icons.pause), findsOneWidget);
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    expect(find.byIcon(Icons.play_arrow), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('memory game opens and displays twelve cards', (tester) async {
     configurePhoneViewport(tester);
     await tester.pumpWidget(const NovaPlay());
@@ -141,6 +181,8 @@ void main() {
     await openGame(tester, 'تحدي إكس أو');
 
     expect(find.text('X     O'), findsOneWidget);
+    expect(find.byType(GameArtwork), findsOneWidget);
+    expect(tester.widget<GameArtwork>(find.byType(GameArtwork)).gameId, 'xo');
     expect(find.byType(GridView), findsOneWidget);
   });
 
@@ -306,6 +348,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('لعبة الأفعى'), findsOneWidget);
+    expect(tester.widget<GameArtwork>(find.byType(GameArtwork)).gameId, 'snake');
     expect(find.text('ابدأ اللعب'), findsOneWidget);
     expect(find.textContaining('كُل الطعام'), findsOneWidget);
     expect(find.byType(GridView), findsOneWidget);
@@ -318,6 +361,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: ChessGamePage(lang: 'ar')));
     await tester.pumpAndSettle();
     expect(find.text('الشطرنج'), findsOneWidget);
+    expect(tester.widget<GameArtwork>(find.byType(GameArtwork)).gameId, 'chess');
     expect(find.text('دورك — الأبيض'), findsOneWidget);
     expect(find.byType(GridView), findsOneWidget);
     expect(find.text('متوسط'), findsOneWidget);
@@ -418,6 +462,7 @@ void main() {
     await openGame(tester, 'باك مان');
 
     expect(find.text('PAC-MAN'), findsOneWidget);
+    expect(tester.widget<GameArtwork>(find.byType(GameArtwork)).gameId, 'pacman');
     expect(find.text('الأرواح'), findsOneWidget);
     expect(find.text('ابدأ اللعب'), findsOneWidget);
     expect(find.textContaining('اجمع النقاط'), findsNWidgets(2));
@@ -481,6 +526,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: SonicRunnerPage(lang: 'ar')));
     await tester.pumpAndSettle();
     expect(find.text('VELOCITY RUNNER'), findsOneWidget);
+    expect(tester.widget<GameArtwork>(find.byType(GameArtwork)).gameId, 'sonic');
     expect(find.text('الحلقات'), findsOneWidget);
     expect(find.text('الأرواح'), findsOneWidget);
     expect(find.text('ابدأ اللعب'), findsOneWidget);
