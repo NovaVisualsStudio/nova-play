@@ -85,6 +85,10 @@ class MainActivity : Activity() {
             text = "قواعد بيانات ومواقع دعم الشركات"
             setOnClickListener { showSupportSources() }
         }
+        val networkLabButton = Button(this).apply {
+            text = "مختبر الشبكة: Wi-Fi وقياس سرعة الإنترنت"
+            setOnClickListener { NetworkLab.show(this@MainActivity) }
+        }
         runButton = Button(this).apply {
             text = "ابدأ الفحص الشامل"
             setOnClickListener { startDiagnostics() }
@@ -127,6 +131,7 @@ class MainActivity : Activity() {
         root.addView(modelButton)
         root.addView(guidesButton)
         root.addView(sourcesButton)
+        root.addView(networkLabButton)
         root.addView(runButton)
         root.addView(adminButton)
         root.addView(copyButton)
