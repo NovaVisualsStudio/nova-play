@@ -20,6 +20,20 @@ Android Wi-Fi and internet diagnostics with an offline router-model registry and
 - Opens the router's local admin page and copies the diagnostic report.
 - Shows optional advanced Termux commands.
 
+## Network lab (Wi-Fi inspection and internet speed)
+- A separate in-app network lab reads Android's active-network state, validated-internet capability, local IP, default gateway, DNS servers, interface name, Wi-Fi RSSI, negotiated link rate and radio frequency where Android exposes them.
+- The lab provides an on-demand Cloudflare-based HTTP download/upload throughput test (8 MB download + 2 MB upload) and five HTTPS response samples. It reports average HTTPS response time, response-time variation and failed samples; these are not ICMP ping or true packet-loss measurements.
+- The speed test is user-initiated, runs over HTTPS and does not need router credentials. It can consume around 10 MB per run. Results depend on the external test endpoint, route, congestion, Wi-Fi signal, device and server load; repeat tests and compare near the router versus farther away.
+- Wi-Fi link speed is a negotiated radio link rate, not measured internet throughput. RSSI is a signal-strength indicator, not a distance or speed measurement.
+- Nearby access-point/channel scanning and background monitoring are not claimed by this version. Android scan throttling and permission/OEM restrictions must be handled explicitly before adding those features.
+
+### Open-source engineering references reviewed
+- WaveMap: https://github.com/CapptainnCWC/wavemap — Wi-Fi survey, signal history, channel spectrum and heatmaps. Reference only; verify license and code compatibility before copying.
+- NetInspector: https://github.com/EnthusiastDeveloper/NetInspector — Android Wi-Fi/LAN diagnostics and ping/traceroute/DNS tooling. Its README states Android 13+ minimum, so it is not a drop-in dependency for this app's current minSdk 23.
+- WiFiAnalyzer: https://github.com/VREMSoftwareDevelopment/WiFiAnalyzer — mature Android Wi-Fi signal/channel analysis project, GPL-3.0. Treat as a reference unless the app's licensing strategy is deliberately made GPL-compatible.
+- LibreSpeed Android: https://github.com/librespeed/speedtest-android — open-source Android speed-test client/template with download, upload, ping and jitter. LGPL-3.0; its template is configured for LibreSpeed servers, so this app currently uses a small native HTTP measurement implementation.
+- Android Wi-Fi scanning guidance: https://developer.android.com/develop/connectivity/wifi/wifi-scan — official permission, throttling and freshness limitations for scan results.
+
 ## Device database sources and reuse
 1. OpenWrt Table of Hardware: https://toh.openwrt.org/ and upstream data endpoint https://openwrt.org/toh.json. The hardware data is community-maintained; OpenWrt documents the JSON dump and nightly generation process. Wiki data is generally under CC BY-SA 4.0; preserve attribution and share-alike requirements for any extracted/redistributed records. The ToH web application's code repository is GPL-2.0; do not assume that code license automatically applies to the underlying wiki data.
 2. OpenWrt ToH repository: https://github.com/openwrt/toh-openwrt-org
