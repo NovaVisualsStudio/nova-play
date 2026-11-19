@@ -17,7 +17,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.Locale
 import java.util.concurrent.Executors
-import kotlin.math.sqrt
 
 /**
  * Read-only network lab. Speed measurements use Cloudflare's public speed-test
@@ -178,13 +177,13 @@ object NetworkLab {
             }
         }
         if (latencies.isNotEmpty()) {
-            val avg = latencies.average()
-            val jitter = if (latencies.size > 1) {
-                sqrt(latencies.map { (it - avg) * (it - avg) }.average())
-            } else 0.0
-            lines += "زمن استجابة HTTPS المتوسط: ${"%.1f".format(Locale.US, avg)} ms"
-            lines += "تذبذب الاستجابة (انحراف معياري): ${"%.1f".format(Locale.US, jitter)} ms"
-            lines += "عينات فاشلة: $failed من 5 — ليست قياساً كاملاً لفقد حزم ICMP"
+            val stats = NetworkMetrics.fromSamples(latencies.map { it.toDouble() }, failed)
+            lines += "وسيط زمن استجابة HTTPS: \${"%.1f".format(Locale.US, stats.median)} ms"
+            lines += "متوسط زمن استجابة HTTPS: \${"%.1f".format(Locale.US, stats.mean)} ms"
+            lines += "P95 لزمن الاستجابة: \${"%.1f".format(Locale.US, stats.p95)} ms"
+            lines += "تذبذب العينات (متوسط فرق العينات المتتالية): \${"%.1f".format(Locale.US, stats.meanAbsoluteDelta)} ms"
+            lines += "الانحراف المعياري: \${"%.1f".format(Locale.US, stats.standardDeviation)} ms"
+            lines += "العينات الفاشلة: $failed من 5 — ليست قياساً لفقد حزم UDP/ICMP"
         } else {
             lines += "تعذر قياس زمن الاستجابة. تحقق من الاتصال أو VPN أو جدار الحماية."
         }
@@ -257,7 +256,12 @@ object NetworkLab {
                     }
                 }
             } else {
-                conn.inputStream.use { stream ->\n                    val discard = ByteArray(1024)\n                    while (stream.read(discard) >= 0) { /* consume small response */ }\n                }
+                conn.inputStream.use { stream ->
+                    val discard = ByteArray(1024)
+                    while (stream.read(discard) >= 0) {
+                        // Consume the small server response before disconnecting.
+                    }
+                }
             }
             val seconds = (System.nanoTime() - start) / 1_000_000_000.0
             if (seconds <= 0.0 || bytes <= 0L) throw IllegalStateException("لم تصل بيانات قابلة للقياس")
