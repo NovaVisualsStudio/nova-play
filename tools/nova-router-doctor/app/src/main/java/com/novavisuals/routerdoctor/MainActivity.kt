@@ -68,7 +68,7 @@ class MainActivity : Activity() {
         modelInput = EditText(this).apply {
             hint = "اكتب الشركة والموديل، مثال: Nokia G-2426G-A"
             textSize = 14f
-            singleLine = true
+            setSingleLine(true)
             setPadding(14, 8, 14, 8)
             setBackgroundColor(0xFFFFFFFF.toInt())
         }
