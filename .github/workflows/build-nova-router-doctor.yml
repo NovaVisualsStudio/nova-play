@@ -28,6 +28,9 @@ jobs:
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
       - name: Download and package OpenWrt hardware database
         run: python3 tools/nova-router-doctor/sync_openwrt_db.py
+      - name: Run unit tests
+        working-directory: tools/nova-router-doctor
+        run: gradle --no-daemon testDebugUnitTest
       - name: Build debug APK
         working-directory: tools/nova-router-doctor
         run: gradle --no-daemon assembleDebug
