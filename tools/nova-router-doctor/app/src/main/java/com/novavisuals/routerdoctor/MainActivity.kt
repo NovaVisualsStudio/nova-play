@@ -162,10 +162,13 @@ class MainActivity : Activity() {
                 }
             }
             if (found == null) {
-                append("\nلا توجد بطاقة محلية موثقة لهذا الموديل بعد: $query")
-                append("يمكن فتح قاعدة OpenWrt العامة أو صفحة دعم الشركة للبحث عن رقم الموديل وإصدار Hardware.")
-                append("قاعدة OpenWrt لا تشمل كل أجهزة GPON المقفلة من مزودي الخدمة.")
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://toh.openwrt.org/")))
+                val matched = lookupOpenWrtDatabase(query)
+                if (!matched) {
+                    append("\nلا توجد بطاقة محلية أو نتيجة OpenWrt مطابقة لهذا الموديل: $query")
+                    append("افتح قاعدة OpenWrt أو صفحة دعم الشركة للبحث عن رقم الموديل وإصدار Hardware.")
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://toh.openwrt.org/")))
+                }
+                append("تنبيه: قاعدة OpenWrt لا تشمل كل أجهزة GPON المقفلة من مزودي الخدمة، ولا تعني قابلية التفليش الآمن.")
             } else {
                 append("\n=== بطاقة الموديل ===")
                 append("الشركة: " + found.optString("manufacturer"))
@@ -188,6 +191,44 @@ class MainActivity : Activity() {
             }
         } catch (e: Exception) {
             append("تعذر قراءة قاعدة الموديلات: ${e.message}")
+        }
+    }
+
+
+    private fun lookupOpenWrtDatabase(query: String): Boolean {
+        return try {
+            val json = assets.open("openwrt_devices.json").bufferedReader().use { it.readText() }
+            val root = JSONObject(json)
+            val devices = root.getJSONArray("devices")
+            val q = query.lowercase(Locale.ROOT).replace(Regex("\\s+"), " ").trim()
+            val matches = mutableListOf<JSONObject>()
+            for (i in 0 until devices.length()) {
+                val item = devices.getJSONObject(i)
+                val brand = item.optString("brand")
+                val model = item.optString("model")
+                val combined = "$brand $model".lowercase(Locale.ROOT)
+                if (combined.contains(q) || (q.length >= 4 && model.lowercase(Locale.ROOT).contains(q))) {
+                    matches.add(item)
+                    if (matches.size >= 5) break
+                }
+            }
+            if (matches.isEmpty()) return false
+            append("\\nنتائج OpenWrt Table of Hardware — ${root.optInt("count")} جهاز في قاعدة المصدر")
+            for (item in matches) {
+                append("\\n${item.optString("brand")} ${item.optString("model")} ${item.optString("version")}")
+                val fields = listOf("cpu", "ram", "flash", "target", "2.4ghz", "5.0ghz", "device_type", "supported_current_release")
+                for (key in fields) {
+                    val value = item.optString(key)
+                    if (value.isNotBlank()) append("$key: $value")
+                }
+                val page = item.optString("source_url")
+                if (page.isNotBlank()) append("مرجع سجل الجهاز: $page")
+            }
+            append("المصدر: OpenWrt Wiki contributors — CC BY-SA 4.0 (راجع شروط المصدر).")
+            true
+        } catch (e: Exception) {
+            append("قاعدة OpenWrt غير موجودة داخل هذه النسخة أو تعذر قراءتها: ${e.message}")
+            false
         }
     }
 
