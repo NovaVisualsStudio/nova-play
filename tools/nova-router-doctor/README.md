@@ -26,7 +26,9 @@ Android Wi-Fi and internet diagnostics with an offline router-model registry and
 - The speed test is user-initiated, runs over HTTPS and does not need router credentials. It can consume around 10 MB per run. Results depend on the external test endpoint, route, congestion, Wi-Fi signal, device and server load; repeat tests and compare near the router versus farther away.
 - Wi-Fi link speed is a negotiated radio link rate, not measured internet throughput. RSSI is a signal-strength indicator, not a distance or speed measurement.
 - A deterministic `NetworkMetrics` core computes percentiles, spread, adjacent-sample variation, failed-sample ratio, and decimal Mbps. JVM unit tests cover the metric math and invalid inputs; CI runs these tests before packaging the APK.
-- Nearby access-point/channel scanning and background monitoring are not claimed by this version. Android scan throttling and permission/OEM restrictions must be handled explicitly before adding those features.
+- On-demand nearby Wi-Fi scan is now implemented with Android's `WifiManager` scan API, runtime location permission, Location Services check, API 33 receiver registration, and safe receiver cleanup. It lists visible SSIDs, band, frequency, channel, RSSI, security family and scan-result age; BSSIDs are deliberately hidden.
+- A pure Kotlin Wi-Fi channel analyzer maps common 2.4/5/6 GHz frequencies and ranks 2.4 GHz channels 1/6/11 using nearby AP signal-weighted overlap. This is a neighbor-AP pressure heuristic, not RF spectrum or airtime utilization. Android scan throttling, cached results, permission and OEM restrictions remain.
+- Wi-Fi channel mapping and ranking have JVM unit tests; CI runs all unit tests before APK packaging.
 
 ### Open-source engineering references reviewed
 - WaveMap: https://github.com/CapptainnCWC/wavemap — Wi-Fi survey, signal history, channel spectrum and heatmaps. Reference only; verify license and code compatibility before copying.
