@@ -35,7 +35,16 @@ class WifiSecurityAuditTest {
 
     @Test fun distinguishesOweFromUnencryptedOpen() {
         assertEquals("Enhanced Open (OWE)", WifiSecurityAudit.analyze("[OWE][ESS]").protocolLabel)
-        assertEquals("مفتوحة أو غير محددة", WifiSecurityAudit.analyze("[ESS]").protocolLabel)
+        assertEquals("شبكة مفتوحة (لا يظهر تشفير)", WifiSecurityAudit.analyze("[ESS]").protocolLabel)
+    }
+
+    @Test fun treatsMissingCapabilitiesAsUnknownNotOpen() {
+        for (input in listOf(null, "", "[]", "[UNKNOWN]")) {
+            val result = WifiSecurityAudit.analyze(input)
+            assertTrue(result.protocolLabel.contains("غير معروف"))
+            assertEquals(0, result.riskScore)
+            assertTrue(result.pmfLabel.contains("غير معروف"))
+        }
     }
 
     @Test fun neverClaimsToRecoverPassword() {

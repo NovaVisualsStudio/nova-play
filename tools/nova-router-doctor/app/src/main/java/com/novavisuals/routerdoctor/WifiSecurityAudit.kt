@@ -23,9 +23,13 @@ object WifiSecurityAudit {
         val hasWpa3 = hasSae || hasOwe || "WPA3" in raw || "SUITE_B_192" in raw
         val hasWpa2 = "WPA2" in raw || hasPsk
         val hasWpa1 = Regex("WPA(?!2|3)").containsMatchIn(raw)
-        val hasWep = "WEP" in raw
+        val hasWep = Regex("(?:^|[\\[\\]_-])WEP(?:$|[\\[\\]_-])").containsMatchIn(raw)
         val hasAnySecurity = hasWpa3 || hasWpa2 || hasWpa1 || hasWep || hasEap
-        val isOpen = !hasAnySecurity
+        // Android commonly reports an unencrypted infrastructure network as [ESS].
+        // Missing/empty capability data is not evidence that a network is open.
+        val hasNetworkModeHint = "ESS" in raw || "IBSS" in raw
+        val isOpen = !hasAnySecurity && hasNetworkModeHint
+        val isUnknown = !hasAnySecurity && !hasNetworkModeHint
         val pmfRequired = "MFPR" in raw
         val pmfCapable = "MFPC" in raw || pmfRequired
         val wpsAdvertised = "WPS" in raw
@@ -41,7 +45,8 @@ object WifiSecurityAudit {
             hasPsk && hasWpa2 -> "WPA2-Personal (PSK)"
             hasWpa1 -> "WPA قديم"
             hasWep -> "WEP قديم جداً"
-            isOpen -> "مفتوحة أو غير محددة"
+            isOpen -> "شبكة مفتوحة (لا يظهر تشفير)"
+            isUnknown -> "غير معروف (بيانات الحماية غير كافية)"
             else -> "حماية غير معروفة"
         }
 
@@ -56,20 +61,22 @@ object WifiSecurityAudit {
                 score += 65
                 findings += "تم الإعلان عن WPA القديم؛ استخدم WPA2-AES أو WPA3."
             }
-            isOpen && !hasOwe -> {
+            isOpen -> {
                 score += 55
                 findings += "لا يظهر تشفير Wi-Fi تقليدي في بيانات المسح."
             }
             hasSae -> findings += "تم رصد SAE المرتبط بـ WPA3."
             hasWpa3 && hasEap -> findings += "تم رصد مؤشرات WPA3-Enterprise؛ لم يتم اختبار المصادقة."
             hasWpa2 -> findings += "تم رصد مؤشرات WPA2؛ لا تكشف هذه البيانات كلمة المرور."
+            isUnknown -> findings += "بيانات قدرات نقطة الوصول فارغة أو غير كافية؛ لا يمكن تصنيف الحماية."
         }
         val pmf = when {
             pmfRequired -> "مطلوب (MFPR)"
             pmfCapable -> "مدعوم اختيارياً (MFPC)"
+            isUnknown -> "غير معروف (بيانات غير كافية)"
             else -> "غير معلن أو غير متاح"
         }
-        if (!pmfCapable && !isOpen) {
+        if (!pmfCapable && hasAnySecurity) {
             score += 10
             findings += "لم يظهر إعلان PMF في بيانات المسح؛ قد تكون معلومات Android غير مكتملة."
         } else if (pmfRequired) {
