@@ -32,7 +32,6 @@ object WifiSecurityAudit {
 
         val protocol = when {
             hasSae && hasPsk -> "WPA2/WPA3-Personal (انتقالي)"
-            hasSae && hasPsk -> "WPA2/WPA3-Personal (انتقالي)"
             hasSae && hasEap -> "WPA3-Personal/Enterprise (تحقق من تفاصيل AP)"
             hasSae -> "WPA3-Personal (SAE)"
             hasWpa3 && hasEap -> "WPA3-Enterprise (EAP)"
