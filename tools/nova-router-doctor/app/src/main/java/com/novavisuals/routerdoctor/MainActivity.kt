@@ -13,6 +13,7 @@ import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
 import android.view.Gravity
 import android.widget.Button
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -27,10 +28,12 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.Executors
 import javax.net.ssl.HttpsURLConnection
+import org.json.JSONObject
 
 class MainActivity : Activity() {
     private lateinit var output: TextView
     private lateinit var runButton: Button
+    private lateinit var modelInput: EditText
     private val worker = Executors.newSingleThreadExecutor()
     private val report = StringBuilder()
     @Volatile private var gateway: String? = null
@@ -61,6 +64,21 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             setTextColor(0xFF486581.toInt())
             setPadding(0, 8, 0, 14)
+        }
+        modelInput = EditText(this).apply {
+            hint = "اكتب الشركة والموديل، مثال: Nokia G-2426G-A"
+            textSize = 14f
+            singleLine = true
+            setPadding(14, 8, 14, 8)
+            setBackgroundColor(0xFFFFFFFF.toInt())
+        }
+        val modelButton = Button(this).apply {
+            text = "ابحث في قاعدة الموديلات"
+            setOnClickListener { lookupModel() }
+        }
+        val guidesButton = Button(this).apply {
+            text = "دليل أعطال وإصلاح Wi-Fi والإنترنت"
+            setOnClickListener { showRepairGuides() }
         }
         runButton = Button(this).apply {
             text = "ابدأ الفحص الشامل"
@@ -100,6 +118,9 @@ class MainActivity : Activity() {
         }
         root.addView(title)
         root.addView(subtitle)
+        root.addView(modelInput)
+        root.addView(modelButton)
+        root.addView(guidesButton)
         root.addView(runButton)
         root.addView(adminButton)
         root.addView(copyButton)
@@ -115,6 +136,79 @@ class MainActivity : Activity() {
         runOnUiThread {
             report.append(line).append("\n")
             output.text = report.toString()
+        }
+    }
+
+
+    private fun lookupModel() {
+        val query = modelInput.text.toString().trim()
+        if (query.isEmpty()) {
+            Toast.makeText(this, "اكتب اسم الشركة والموديل أولاً", Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            val json = assets.open("router_models.json").bufferedReader().use { it.readText() }
+            val devices = JSONObject(json).getJSONArray("devices")
+            val q = query.lowercase(Locale.ROOT)
+            var found: JSONObject? = null
+            for (i in 0 until devices.length()) {
+                val item = devices.getJSONObject(i)
+                val terms = mutableListOf(item.optString("manufacturer"), item.optString("model"))
+                val aliases = item.optJSONArray("aliases")
+                if (aliases != null) for (j in 0 until aliases.length()) terms.add(aliases.optString(j))
+                if (terms.any { it.lowercase(Locale.ROOT).contains(q) || q.contains(it.lowercase(Locale.ROOT)) && it.isNotBlank() }) {
+                    found = item
+                    break
+                }
+            }
+            if (found == null) {
+                append("\\nلا توجد بطاقة محلية موثقة لهذا الموديل بعد: $query")
+                append("يمكن فتح قاعدة OpenWrt العامة أو صفحة دعم الشركة للبحث عن رقم الموديل وإصدار Hardware.")
+                append("قاعدة OpenWrt لا تشمل كل أجهزة GPON المقفلة من مزودي الخدمة.")
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://toh.openwrt.org/")))
+            } else {
+                append("\\n=== بطاقة الموديل ===")
+                append("الشركة: " + found.optString("manufacturer"))
+                append("الموديل: " + found.optString("model"))
+                append("نوع الجهاز: " + found.optString("device_type"))
+                val specs = found.optJSONObject("verified_specs")
+                if (specs != null) {
+                    val keys = specs.keys()
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        append("$key: " + specs.optString(key))
+                    }
+                }
+                val caveats = found.optJSONArray("caveats")
+                if (caveats != null) for (i in 0 until caveats.length()) append("تنبيه: " + caveats.optString(i))
+                val source = found.optString("support_url")
+                if (source.isNotBlank()) append("مرجع الشركة: $source")
+                val guide = found.optString("product_guide_url")
+                if (guide.isNotBlank()) append("دليل المنتج: $guide")
+            }
+        } catch (e: Exception) {
+            append("تعذر قراءة قاعدة الموديلات: ${e.message}")
+        }
+    }
+
+    private fun showRepairGuides() {
+        try {
+            val json = assets.open("repair_playbooks.json").bufferedReader().use { it.readText() }
+            val items = JSONObject(json).getJSONArray("playbooks")
+            append("\\n========== أدلة التشخيص والإصلاح الآمن ==========")
+            for (i in 0 until items.length()) {
+                val item = items.getJSONObject(i)
+                append("\\n" + item.optString("title"))
+                val signals = item.optJSONArray("signals")
+                if (signals != null) for (j in 0 until signals.length()) append("علامة: " + signals.optString(j))
+                val steps = item.optJSONArray("safe_steps")
+                if (steps != null) for (j in 0 until steps.length()) append("خطوة: " + steps.optString(j))
+                val avoid = item.optJSONArray("avoid")
+                if (avoid != null) for (j in 0 until avoid.length()) append("تجنب: " + avoid.optString(j))
+            }
+            append("\\nهذه إرشادات عامة؛ لا تنفذ إعدادات خاصة بالموديل إلا بعد مطابقة Hardware Version وFirmware.")
+        } catch (e: Exception) {
+            append("تعذر تحميل أدلة الإصلاح: ${e.message}")
         }
     }
 
