@@ -483,10 +483,10 @@ class MainActivity : Activity() {
             }
         } catch (e: SecurityException) {
             unregisterWifiScanReceiver()
-            Toast.makeText(this, "رفض Android صلاحية مسح Wi-Fi: \${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "رفض Android صلاحية مسح Wi-Fi: ${e.message}", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
             unregisterWifiScanReceiver()
-            Toast.makeText(this, "تعذر بدء مسح Wi-Fi: \${e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "تعذر بدء مسح Wi-Fi: ${e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -528,7 +528,7 @@ class MainActivity : Activity() {
 
             val nowMicros = SystemClock.elapsedRealtimeNanos() / 1000L
             val lines = mutableListOf<String>()
-            lines += "عدد نقاط الوصول المرئية: \${results.size}"
+            lines += "عدد نقاط الوصول المرئية: ${results.size}"
             lines += if (freshScan) "حالة البيانات: نتيجة مسح حديث أبلغ عنها Android" else "حالة البيانات: قد تكون نتائج مخزنة مؤقتاً بسبب قيود المسح"
             lines += ""
             val observations = mutableListOf<WifiObservation>()
@@ -546,18 +546,18 @@ class MainActivity : Activity() {
                     else -> "مفتوحة/غير محددة"
                 }
                 val ageSeconds = ((nowMicros - ap.timestamp).coerceAtLeast(0L) / 1_000_000L)
-                lines += "\${index + 1}. $name"
-                lines += "   \${ap.level} dBm (\${WifiChannelAnalyzer.signalQualityLabel(ap.level)}) | $band | قناة $channel | \${ap.frequency} MHz"
-                lines += "   الحماية: $security | عمر سجل المسح: \${ageSeconds}s"
+                lines += "${index + 1}. $name"
+                lines += "   ${ap.level} dBm (${WifiChannelAnalyzer.signalQualityLabel(ap.level)}) | $band | قناة $channel | ${ap.frequency} MHz"
+                lines += "   الحماية: $security | عمر سجل المسح: ${ageSeconds}s"
             }
             val ranked = WifiChannelAnalyzer.rank24GhzChannels(observations)
             if (ranked.isNotEmpty() && observations.isNotEmpty()) {
                 lines += ""
                 lines += "=== تقدير ضغط القنوات 2.4 GHz ==="
                 ranked.forEach { score ->
-                    lines += "القناة \${score.channel}: نقاط قريبة متداخلة تقريباً \${score.visibleAccessPoints} | مؤشر الضغط \${"%.2f".format(Locale.US, score.score)}"
+                    lines += "القناة ${score.channel}: نقاط قريبة متداخلة تقريباً ${score.visibleAccessPoints} | مؤشر الضغط ${"%.2f".format(Locale.US, score.score)}"
                 }
-                lines += "اقتراح أولي: جرّب القناة \${ranked.first().channel} إذا كان الراوتر يسمح بذلك، ثم قارن الأداء."
+                lines += "اقتراح أولي: جرّب القناة ${ranked.first().channel} إذا كان الراوتر يسمح بذلك، ثم قارن الأداء."
             } else {
                 lines += ""
                 lines += "لم تظهر نقاط وصول 2.4 GHz كافية لتقديم مقارنة للقنوات."
@@ -578,9 +578,9 @@ class MainActivity : Activity() {
                 .setPositiveButton("إغلاق", null)
                 .show()
         } catch (e: SecurityException) {
-            Toast.makeText(this, "Android منع قراءة نتائج المسح: \${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Android منع قراءة نتائج المسح: ${e.message}", Toast.LENGTH_LONG).show()
         } catch (e: Exception) {
-            Toast.makeText(this, "فشل تحليل نتائج Wi-Fi: \${e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "فشل تحليل نتائج Wi-Fi: ${e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
         }
     }
 
