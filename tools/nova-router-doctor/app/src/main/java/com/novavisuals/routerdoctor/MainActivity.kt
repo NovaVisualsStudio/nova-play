@@ -162,12 +162,12 @@ class MainActivity : Activity() {
                 }
             }
             if (found == null) {
-                append("\\nلا توجد بطاقة محلية موثقة لهذا الموديل بعد: $query")
+                append("\nلا توجد بطاقة محلية موثقة لهذا الموديل بعد: $query")
                 append("يمكن فتح قاعدة OpenWrt العامة أو صفحة دعم الشركة للبحث عن رقم الموديل وإصدار Hardware.")
                 append("قاعدة OpenWrt لا تشمل كل أجهزة GPON المقفلة من مزودي الخدمة.")
                 startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://toh.openwrt.org/")))
             } else {
-                append("\\n=== بطاقة الموديل ===")
+                append("\n=== بطاقة الموديل ===")
                 append("الشركة: " + found.optString("manufacturer"))
                 append("الموديل: " + found.optString("model"))
                 append("نوع الجهاز: " + found.optString("device_type"))
@@ -195,10 +195,10 @@ class MainActivity : Activity() {
         try {
             val json = assets.open("repair_playbooks.json").bufferedReader().use { it.readText() }
             val items = JSONObject(json).getJSONArray("playbooks")
-            append("\\n========== أدلة التشخيص والإصلاح الآمن ==========")
+            append("\n========== أدلة التشخيص والإصلاح الآمن ==========")
             for (i in 0 until items.length()) {
                 val item = items.getJSONObject(i)
-                append("\\n" + item.optString("title"))
+                append("\n" + item.optString("title"))
                 val signals = item.optJSONArray("signals")
                 if (signals != null) for (j in 0 until signals.length()) append("علامة: " + signals.optString(j))
                 val steps = item.optJSONArray("safe_steps")
@@ -206,7 +206,7 @@ class MainActivity : Activity() {
                 val avoid = item.optJSONArray("avoid")
                 if (avoid != null) for (j in 0 until avoid.length()) append("تجنب: " + avoid.optString(j))
             }
-            append("\\nهذه إرشادات عامة؛ لا تنفذ إعدادات خاصة بالموديل إلا بعد مطابقة Hardware Version وFirmware.")
+            append("\nهذه إرشادات عامة؛ لا تنفذ إعدادات خاصة بالموديل إلا بعد مطابقة Hardware Version وFirmware.")
         } catch (e: Exception) {
             append("تعذر تحميل أدلة الإصلاح: ${e.message}")
         }
