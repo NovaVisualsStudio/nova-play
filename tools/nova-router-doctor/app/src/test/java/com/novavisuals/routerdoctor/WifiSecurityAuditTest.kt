@@ -22,6 +22,11 @@ class WifiSecurityAuditTest {
         assertTrue(result.protocolLabel.contains("انتقالي"))
     }
 
+    @Test fun identifiesWpa3Enterprise() {
+        val result = WifiSecurityAudit.analyze("[WPA3-EAP-SUITE_B_192][MFPR][MFPC]")
+        assertEquals("WPA3-Enterprise (EAP)", result.protocolLabel)
+    }
+
     @Test fun flagsLegacyWep() {
         val result = WifiSecurityAudit.analyze("[WEP][ESS]")
         assertEquals("WEP قديم جداً", result.protocolLabel)
