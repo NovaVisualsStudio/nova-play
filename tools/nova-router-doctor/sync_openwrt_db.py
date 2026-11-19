@@ -3,6 +3,7 @@
 import csv
 import io
 import json
+import re
 import sys
 import urllib.request
 import zipfile
@@ -29,17 +30,39 @@ def main():
     if not names:
         raise RuntimeError("OpenWrt export archive is empty")
     with archive.open(names[0]) as raw:
-        text = io.TextIOWrapper(raw, encoding="utf-8", errors="replace")
+        text = io.TextIOWrapper(raw, encoding="cp1252", errors="replace")
         reader = csv.DictReader(text, delimiter="\t")
         rows = []
         for row in reader:
-            clean = {k: (v or "").strip() for k, v in row.items() if k}
+            clean = {}
+            for key, value in row.items():
+                if not key:
+                    continue
+                normalized_key = re.sub(r"[^a-z0-9]+", "", key.lower())
+                clean[normalized_key] = (value or "").strip()
             brand = clean.get("brand", "")
             model = clean.get("model", "")
             if not brand and not model:
                 continue
-            item = {key: clean.get(key, "") for key in FIELDS if clean.get(key, "")}
-            item["source_url"] = "https://openwrt.org/toh/" + clean.get("page", "").replace(":", "/")
+            aliases = {
+                "24ghz": "2.4ghz", "50ghz": "5.0ghz", "60ghz": "6.0ghz",
+                "eth1g": "eth_1g", "eth25g": "eth_2.5g", "eth5g": "eth_5g",
+                "eth10g": "eth_10g", "wlanhardware": "wlan_hardware",
+                "devicetype": "device_type", "supportedcurrentrelease": "supported_current_release",
+                "supportedsincerelease": "supported_since_release", "oemdeviceurl": "oem_device_url"
+            }
+            normalized = dict(clean)
+            for old_key, new_key in aliases.items():
+                if old_key in clean:
+                    normalized[new_key] = clean[old_key]
+            item = {}
+            for key in FIELDS:
+                lookup_key = re.sub(r"[^a-z0-9]+", "", key.lower())
+                value = normalized.get(key, normalized.get(lookup_key, ""))
+                if value:
+                    item[key] = value
+            page = clean.get("page", "")
+            item["source_url"] = "https://openwrt.org/toh/" + page.replace(":", "/")
             item["source_type"] = "OpenWrt community hardware record"
             rows.append(item)
     payload = {
