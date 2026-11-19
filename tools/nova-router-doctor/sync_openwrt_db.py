@@ -62,6 +62,8 @@ def main():
                 if value:
                     item[key] = value
             page = clean.get("page", "")
+            if page.startswith("toh:"):
+                page = page[4:]
             item["source_url"] = "https://openwrt.org/toh/" + page.replace(":", "/")
             item["source_type"] = "OpenWrt community hardware record"
             rows.append(item)
