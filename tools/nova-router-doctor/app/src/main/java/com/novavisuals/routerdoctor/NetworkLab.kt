@@ -26,6 +26,7 @@ object NetworkLab {
     private const val DOWNLOAD_BYTES = 8_000_000
     private const val UPLOAD_BYTES = 2_000_000
     private val executor = Executors.newSingleThreadExecutor()
+    private val loadExecutor = Executors.newFixedThreadPool(2)
     private val main = Handler(Looper.getMainLooper())
 
     fun show(activity: Activity) {
@@ -44,11 +45,15 @@ object NetworkLab {
         val speedButton = Button(activity).apply {
             text = "قياس سرعة الإنترنت"
         }
+        val bufferbloatButton = Button(activity).apply {
+            text = "اختبار الازدحام وBufferbloat (تقريبي)"
+        }
         val closeButton = Button(activity).apply {
             text = "إغلاق"
         }
         root.addView(wifiButton)
         root.addView(speedButton)
+        root.addView(bufferbloatButton)
         root.addView(ScrollView(activity).apply {
             addView(output)
             layoutParams = LinearLayout.LayoutParams(
@@ -61,6 +66,21 @@ object NetworkLab {
             .setView(root)
             .create()
         closeButton.setOnClickListener { dialog.dismiss() }
+        bufferbloatButton.setOnClickListener {
+            bufferbloatButton.isEnabled = false
+            speedButton.isEnabled = false
+            wifiButton.isEnabled = false
+            output.text = "جارٍ قياس زمن الاستجابة قبل الضغط وأثناء تنزيل/رفع متزامنين. قد يستهلك الاختبار نحو 15 MB..."
+            executor.execute {
+                val result = runLoadedLatencyTest()
+                main.post {
+                    output.text = result
+                    bufferbloatButton.isEnabled = true
+                    speedButton.isEnabled = true
+                    wifiButton.isEnabled = true
+                }
+            }
+        }
         wifiButton.setOnClickListener {
             wifiButton.isEnabled = false
             output.text = "جارٍ تحليل اتصال Wi-Fi..."
@@ -219,6 +239,89 @@ object NetworkLab {
         lines += "تنبيه دقة: هذه نتيجة اختبار واحد إلى خادم خارجي، وليست ضماناً لسرعة باقة المزود. تتأثر بالخادم والمسار والازدحام وقوة Wi-Fi والجهاز. أعد الاختبار مرتين أو ثلاثاً في أوقات مختلفة للمقارنة."
         lines += "الخصوصية: الاختبار يرسل طلبات HTTPS إلى Cloudflare وGoogle ولا يحتاج كلمة مرور الراوتر. لا يغيّر إعدادات الشبكة."
         return lines.joinToString("\n")
+    }
+
+
+    /**
+     * Approximate loaded-latency test: HTTPS transaction latency is sampled
+     * before and during simultaneous HTTP download/upload. This is not an
+     * RFC 2544/RRUL test and does not measure ICMP/UDP packet delay or loss.
+     */
+    private fun runLoadedLatencyTest(): String {
+        val lines = mutableListOf<String>()
+        lines += "=== فحص زمن الاستجابة تحت الحمل ==="
+        lines += "الخادم: Cloudflare speed.cloudflare.com + Google HTTPS probe"
+        lines += "الحمل المتزامن: تنزيل 12 MB ورفع 3 MB تقريباً"
+        lines += "القياس: 6 عينات HTTPS قبل الحمل و6 أثناءه"
+        val baseline = measureHttpsSamples(6)
+        if (baseline.isEmpty()) {
+            return lines.joinToString("\n") + "\nتعذر أخذ عينات أساسية؛ تحقق من الاتصال ثم أعد المحاولة."
+        }
+        val download = loadExecutor.submit<Pair<Long, Double>> {
+            transfer("https://speed.cloudflare.com/__down?bytes=12000000",
+                method = "GET", payload = null, readResponse = true)
+        }
+        val upload = loadExecutor.submit<Pair<Long, Double>> {
+            val payload = ByteArray(3_000_000) { (it * 17).toByte() }
+            transfer("https://speed.cloudflare.com/__up",
+                method = "POST", payload = payload, readResponse = false)
+        }
+        val loaded = measureHttpsSamples(6)
+        val transferResults = mutableListOf<String>()
+        try {
+            val d = download.get()
+            transferResults += "التنزيل أثناء الحمل: ${formatMbps(d.first, d.second)}"
+        } catch (e: Exception) {
+            transferResults += "تعذر إكمال حمل التنزيل: ${e.cause?.javaClass?.simpleName ?: e.javaClass.simpleName}"
+        }
+        try {
+            val u = upload.get()
+            transferResults += "الرفع أثناء الحمل: ${formatMbps(u.first, u.second)}"
+        } catch (e: Exception) {
+            transferResults += "تعذر إكمال حمل الرفع: ${e.cause?.javaClass?.simpleName ?: e.javaClass.simpleName}"
+        }
+        lines += ""
+        lines += "=== النتائج ==="
+        val baseStats = NetworkMetrics.fromSamples(baseline)
+        lines += "وسيط الاستجابة قبل الحمل: ${"%.1f".format(Locale.US, baseStats.median)} ms"
+        if (loaded.isNotEmpty()) {
+            val loadedStats = NetworkMetrics.fromSamples(loaded)
+            val assessment = NetworkMetrics.assessLoadedLatency(baseStats.p95, loadedStats.p95)
+            lines += "P95 قبل الحمل: ${"%.1f".format(Locale.US, baseStats.p95)} ms"
+            lines += "P95 أثناء الحمل: ${"%.1f".format(Locale.US, loadedStats.p95)} ms"
+            lines += "زيادة P95 تحت الحمل: ${"%.1f".format(Locale.US, assessment.increaseMs)} ms"
+            lines += "التقييم التقريبي: ${assessment.label}"
+            lines += "العينات الناجحة: قبل ${baseline.size}/6، أثناء ${loaded.size}/6"
+        } else {
+            lines += "تعذر أخذ عينات أثناء الحمل؛ لا يمكن إصدار تقييم."
+        }
+        lines += ""
+        lines += transferResults
+        lines += ""
+        lines += "مهم: هذا فحص تقريبي لزمن معاملات HTTPS وليس اختبار Bufferbloat معيارياً. لا يقيس UDP jitter أو packet loss، وقد تؤثر استجابة الخادم والمسار في النتيجة. للقياس المعياري نحتاج خادم اختبار مخصصاً يدعم تدفقات متعددة وقياساً زمنياً مستقلاً."
+        return lines.joinToString("\n")
+    }
+
+    private fun measureHttpsSamples(count: Int): List<Double> {
+        val samples = mutableListOf<Double>()
+        repeat(count) {
+            try {
+                val start = System.nanoTime()
+                val conn = (URL("https://www.google.com/generate_204").openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 5000
+                    readTimeout = 5000
+                    useCaches = false
+                }
+                val code = conn.responseCode
+                conn.disconnect()
+                val elapsed = (System.nanoTime() - start) / 1_000_000.0
+                if (code in 200..399) samples += elapsed
+            } catch (_: Exception) {
+                // Failed probes are excluded from latency percentiles.
+            }
+        }
+        return samples
     }
 
     private fun transfer(

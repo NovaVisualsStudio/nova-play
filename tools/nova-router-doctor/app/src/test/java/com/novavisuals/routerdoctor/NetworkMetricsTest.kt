@@ -24,6 +24,17 @@ class NetworkMetricsTest {
     }
 
     @Test
+    fun classifiesAddedLatencyUnderLoad() {
+        assertEquals("ممتاز — زيادة طفيفة", NetworkMetrics.assessLoadedLatency(20.0, 24.0).label)
+        assertEquals(45.0, NetworkMetrics.assessLoadedLatency(30.0, 75.0).increaseMs, 0.0001)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun rejectsNonFiniteLoadedLatency() {
+        NetworkMetrics.assessLoadedLatency(10.0, Double.NaN)
+    }
+
+    @Test
     fun throughputUsesDecimalMegabitsPerSecond() {
         assertEquals(8.0, NetworkMetrics.throughputMbps(1_000_000, 1.0), 0.0001)
     }
