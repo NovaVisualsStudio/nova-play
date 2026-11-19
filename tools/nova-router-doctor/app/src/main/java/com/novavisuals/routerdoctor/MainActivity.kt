@@ -107,6 +107,10 @@ class MainActivity : Activity() {
             text = "مختبر الشبكة: Wi-Fi وقياس سرعة الإنترنت"
             setOnClickListener { NetworkLab.show(this@MainActivity) }
         }
+        val wifiSurveyButton = Button(this).apply {
+            text = "تحليل Wi-Fi المتقدم: الشبكات والقنوات"
+            setOnClickListener { startWifiSurvey() }
+        }
         runButton = Button(this).apply {
             text = "ابدأ الفحص الشامل"
             setOnClickListener { startDiagnostics() }
@@ -555,7 +559,8 @@ class MainActivity : Activity() {
                 lines += ""
                 lines += "=== تقدير ضغط القنوات 2.4 GHz ==="
                 ranked.forEach { score ->
-                    lines += "القناة ${score.channel}: نقاط قريبة متداخلة تقريباً ${score.visibleAccessPoints} | مؤشر الضغط ${"%.2f".format(Locale.US, score.score)}"
+                    val scoreText = String.format(Locale.US, "%.2f", score.score)
+                    lines += "القناة ${score.channel}: نقاط قريبة متداخلة تقريباً ${score.visibleAccessPoints} | مؤشر الضغط $scoreText"
                 }
                 lines += "اقتراح أولي: جرّب القناة ${ranked.first().channel} إذا كان الراوتر يسمح بذلك، ثم قارن الأداء."
             } else {
