@@ -30,3 +30,28 @@ chmod +x check.sh
 The report is saved under `~/router-check/`. Review it before sharing; it may include local network addresses. Never share router credentials.
 
 Designed for Nokia G-2426G-A troubleshooting, but the basic network tests work with other routers too.
+
+
+## Advanced Wi-Fi / WAN diagnosis
+
+Use the expanded passive diagnostic when the basic report is not enough. It checks interface counters, Wi-Fi signal information when Android exposes it, the router gateway, two public IP endpoints, two DNS names, HTTPS timing, and an optional route trace. It deliberately filters SSID/BSSID output and never changes router or phone network settings.
+
+Install the additional optional route-trace package and run:
+
+```bash
+pkg update -y
+pkg install -y iproute2 iputils dnsutils curl traceroute
+mkdir -p ~/router-check
+cd ~/router-check
+curl -L https://raw.githubusercontent.com/NovaVisualsStudio/nova-play/main/tools/nokia-router-diagnostic/advanced-check.sh -o advanced-check.sh
+chmod +x advanced-check.sh
+bash advanced-check.sh
+```
+
+The report is saved as `~/router-check/advanced-report-<timestamp>.txt`. To display the newest report:
+
+```bash
+ls -t ~/router-check/advanced-report-*.txt | head -1
+```
+
+Then run `cat` with the exact path printed by that command. Review it before sharing. The script is diagnostic only: it cannot access Nokia's admin-only GPON/WAN configuration and does not automatically apply repairs. Do not share Wi-Fi/router passwords, public IP addresses, or other private account details.
