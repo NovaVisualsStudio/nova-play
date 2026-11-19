@@ -159,7 +159,7 @@ object NetworkLab {
         lines += "حجم التنزيل: 8 MB | حجم الرفع: 2 MB"
         val latencies = mutableListOf<Long>()
         var failed = 0
-        repeat(5) { index ->
+        repeat(9) {
             try {
                 val start = System.nanoTime()
                 val conn = (URL("https://www.google.com/generate_204").openConnection() as HttpURLConnection).apply {
@@ -178,12 +178,12 @@ object NetworkLab {
         }
         if (latencies.isNotEmpty()) {
             val stats = NetworkMetrics.fromSamples(latencies.map { it.toDouble() }, failed)
-            lines += "وسيط زمن استجابة HTTPS: \${"%.1f".format(Locale.US, stats.median)} ms"
-            lines += "متوسط زمن استجابة HTTPS: \${"%.1f".format(Locale.US, stats.mean)} ms"
-            lines += "P95 لزمن الاستجابة: \${"%.1f".format(Locale.US, stats.p95)} ms"
-            lines += "تذبذب العينات (متوسط فرق العينات المتتالية): \${"%.1f".format(Locale.US, stats.meanAbsoluteDelta)} ms"
-            lines += "الانحراف المعياري: \${"%.1f".format(Locale.US, stats.standardDeviation)} ms"
-            lines += "العينات الفاشلة: $failed من 5 — ليست قياساً لفقد حزم UDP/ICMP"
+            lines += "وسيط زمن استجابة HTTPS: ${"%.1f".format(Locale.US, stats.median)} ms"
+            lines += "متوسط زمن استجابة HTTPS: ${"%.1f".format(Locale.US, stats.mean)} ms"
+            lines += "P95 لزمن الاستجابة: ${"%.1f".format(Locale.US, stats.p95)} ms"
+            lines += "تذبذب العينات (متوسط فرق العينات المتتالية): ${"%.1f".format(Locale.US, stats.meanAbsoluteDelta)} ms"
+            lines += "الانحراف المعياري: ${"%.1f".format(Locale.US, stats.standardDeviation)} ms"
+            lines += "العينات الفاشلة: $failed من 9 — ليست قياساً لفقد حزم UDP/ICMP"
         } else {
             lines += "تعذر قياس زمن الاستجابة. تحقق من الاتصال أو VPN أو جدار الحماية."
         }
@@ -272,7 +272,7 @@ object NetworkLab {
     }
 
     private fun formatMbps(bytes: Long, seconds: Double): String {
-        val mbps = bytes * 8.0 / seconds / 1_000_000.0
+        val mbps = NetworkMetrics.throughputMbps(bytes, seconds)
         return "${"%.2f".format(Locale.US, mbps)} Mbps"
     }
 
