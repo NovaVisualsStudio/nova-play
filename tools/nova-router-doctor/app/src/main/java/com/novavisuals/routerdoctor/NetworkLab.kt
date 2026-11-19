@@ -48,12 +48,16 @@ object NetworkLab {
         val bufferbloatButton = Button(activity).apply {
             text = "اختبار الازدحام وBufferbloat (تقريبي)"
         }
+        val lanButton = Button(activity).apply {
+            text = "اكتشاف أجهزة الشبكة المحلية"
+        }
         val closeButton = Button(activity).apply {
             text = "إغلاق"
         }
         root.addView(wifiButton)
         root.addView(speedButton)
         root.addView(bufferbloatButton)
+        root.addView(lanButton)
         root.addView(ScrollView(activity).apply {
             addView(output)
             layoutParams = LinearLayout.LayoutParams(
@@ -65,43 +69,56 @@ object NetworkLab {
             .setTitle("مختبر NOVA للشبكات")
             .setView(root)
             .create()
+        val setBusy: (Boolean) -> Unit = { busy ->
+            listOf(wifiButton, speedButton, bufferbloatButton, lanButton)
+                .forEach { it.isEnabled = !busy }
+        }
         closeButton.setOnClickListener { dialog.dismiss() }
+
         bufferbloatButton.setOnClickListener {
-            bufferbloatButton.isEnabled = false
-            speedButton.isEnabled = false
-            wifiButton.isEnabled = false
+            setBusy(true)
             output.text = "جارٍ قياس زمن الاستجابة قبل الضغط وأثناء تنزيل/رفع متزامنين. قد يستهلك الاختبار نحو 15 MB..."
             executor.execute {
                 val result = runLoadedLatencyTest()
                 main.post {
-                    output.text = result
-                    bufferbloatButton.isEnabled = true
-                    speedButton.isEnabled = true
-                    wifiButton.isEnabled = true
+                    if (dialog.isShowing) output.text = result
+                    setBusy(false)
                 }
             }
         }
+
+        lanButton.setOnClickListener {
+            setBusy(true)
+            output.text = "جارٍ فحص عناوين الشبكة المحلية ومنافذ TCP الشائعة فقط. لا يجري تسجيل دخول أو تغيير إعدادات..."
+            executor.execute {
+                val result = LanDiscovery.run(activity.applicationContext)
+                main.post {
+                    if (dialog.isShowing) output.text = result
+                    setBusy(false)
+                }
+            }
+        }
+
         wifiButton.setOnClickListener {
-            wifiButton.isEnabled = false
+            setBusy(true)
             output.text = "جارٍ تحليل اتصال Wi-Fi..."
             executor.execute {
                 val result = inspectWifi(activity)
                 main.post {
-                    output.text = result
-                    wifiButton.isEnabled = true
+                    if (dialog.isShowing) output.text = result
+                    setBusy(false)
                 }
             }
         }
+
         speedButton.setOnClickListener {
-            speedButton.isEnabled = false
-            wifiButton.isEnabled = false
+            setBusy(true)
             output.text = "جارٍ قياس زمن الاستجابة والتنزيل والرفع. أبقِ التطبيق مفتوحاً ولا تنتقل بين Wi-Fi وبيانات الهاتف..."
             executor.execute {
                 val result = runSpeedTest()
                 main.post {
-                    output.text = result
-                    speedButton.isEnabled = true
-                    wifiButton.isEnabled = true
+                    if (dialog.isShowing) output.text = result
+                    setBusy(false)
                 }
             }
         }

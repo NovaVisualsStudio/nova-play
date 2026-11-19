@@ -29,6 +29,9 @@ Android Wi-Fi and internet diagnostics with an offline router-model registry and
 - On-demand nearby Wi-Fi scan is now implemented with Android's `WifiManager` scan API, runtime location permission, Location Services check, API 33 receiver registration, and safe receiver cleanup. It lists visible SSIDs, band, frequency, channel, RSSI, security family and scan-result age; BSSIDs are deliberately hidden.
 - A pure Kotlin Wi-Fi channel analyzer maps common 2.4/5/6 GHz frequencies and ranks 2.4 GHz channels 1/6/11 using nearby AP signal-weighted overlap. This is a neighbor-AP pressure heuristic, not RF spectrum or airtime utilization. Android scan throttling, cached results, permission and OEM restrictions remain.
 - Wi-Fi channel mapping and ranking have JVM unit tests; CI runs all unit tests before APK packaging.
+- Adds an opt-in LAN discovery screen for Wi-Fi/Ethernet IPv4 private subnets from /24 to /30 only. It checks a bounded list of common TCP ports with short connection timeouts, performs no login or service-banner probing, and never reads MAC addresses or sends LAN inventory to a server. Device roles are explicitly labelled as probable hints, not verified identities.
+- LAN discovery is covered by JVM tests for subnet boundaries, private-range restrictions and role hints. Networks larger than /24 and IPv6 are intentionally not scanned in this version.
+- Android local-network permission migration: this app currently targets SDK 32. Android 17 requires apps targeting SDK 37+ to declare and request `ACCESS_LOCAL_NETWORK` before raw LAN socket access; revisit this before raising targetSdk. See https://developer.android.com/privacy-and-security/local-network-permission.
 
 ### Open-source engineering references reviewed
 - WaveMap: https://github.com/CapptainnCWC/wavemap — Wi-Fi survey, signal history, channel spectrum and heatmaps. Reference only; verify license and code compatibility before copying.
@@ -77,3 +80,9 @@ Open Repository → Actions → choose the workflow → Run workflow, or wait fo
 
 ## Android build requirements
 Gradle 8.7, JDK 17 and Android SDK platform 35.
+
+
+### Wireless Security Intelligence (passive)
+- Nearby Wi-Fi scan classifies advertised capabilities as Open, WEP, WPA, WPA2-Personal, WPA2-Enterprise, WPA3-Personal, Enhanced Open (OWE), or WPA2/WPA3 transition where Android exposes the relevant tokens.
+- Adds a transparent heuristic risk score and findings for legacy protocols, PMF advertisement (MFPC/MFPR), and a tentative WPS capability indicator. These are scan-metadata observations, not proof of exploitability or password recovery.
+- No handshake capture, password guessing, WPS PIN attempts, credential extraction, connection attempts, or remote upload is performed. Android may omit capability details; unknown values remain unknown.
