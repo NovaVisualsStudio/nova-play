@@ -1,6 +1,7 @@
 package com.novavisuals.routerdoctor
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -80,6 +81,10 @@ class MainActivity : Activity() {
             text = "دليل أعطال وإصلاح Wi-Fi والإنترنت"
             setOnClickListener { showRepairGuides() }
         }
+        val sourcesButton = Button(this).apply {
+            text = "قواعد بيانات ومواقع دعم الشركات"
+            setOnClickListener { showSupportSources() }
+        }
         runButton = Button(this).apply {
             text = "ابدأ الفحص الشامل"
             setOnClickListener { startDiagnostics() }
@@ -121,6 +126,7 @@ class MainActivity : Activity() {
         root.addView(modelInput)
         root.addView(modelButton)
         root.addView(guidesButton)
+        root.addView(sourcesButton)
         root.addView(runButton)
         root.addView(adminButton)
         root.addView(copyButton)
@@ -229,6 +235,43 @@ class MainActivity : Activity() {
         } catch (e: Exception) {
             append("قاعدة OpenWrt غير موجودة داخل هذه النسخة أو تعذر قراءتها: ${e.message}")
             false
+        }
+    }
+
+
+    private fun showSupportSources() {
+        try {
+            val json = assets.open("router_models.json").bufferedReader().use { it.readText() }
+            val root = JSONObject(json)
+            val labels = mutableListOf<String>()
+            val urls = mutableListOf<String>()
+            val catalogues = root.optJSONArray("catalogues")
+            if (catalogues != null) {
+                for (i in 0 until catalogues.length()) {
+                    val item = catalogues.getJSONObject(i)
+                    labels.add("قاعدة بيانات: " + item.optString("name"))
+                    urls.add(item.optString("url"))
+                }
+            }
+            val vendors = root.optJSONArray("manufacturer_support")
+            if (vendors != null) {
+                for (i in 0 until vendors.length()) {
+                    val item = vendors.getJSONObject(i)
+                    labels.add("دعم الشركة: " + item.optString("name"))
+                    urls.add(item.optString("url"))
+                }
+            }
+            AlertDialog.Builder(this)
+                .setTitle("مصادر الموديلات والدعم الرسمي")
+                .setItems(labels.toTypedArray()) { _, which ->
+                    if (which in urls.indices) {
+                        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(urls[which])))
+                    }
+                }
+                .setNegativeButton("إغلاق", null)
+                .show()
+        } catch (e: Exception) {
+            append("تعذر تحميل روابط الدعم: ${e.message}")
         }
     }
 
