@@ -1,16 +1,23 @@
 package com.novavisuals.routerdoctor
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.BroadcastReceiver
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.location.LocationManager
 import android.net.Uri
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.text.method.ScrollingMovementMethod
 import android.view.Gravity
 import android.widget.Button
@@ -38,6 +45,17 @@ class MainActivity : Activity() {
     private val worker = Executors.newSingleThreadExecutor()
     private val report = StringBuilder()
     @Volatile private var gateway: String? = null
+    private val wifiScanPermissionRequest = 7412
+    private var wifiScanReceiverRegistered = false
+    private val wifiScanReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == WifiManager.SCAN_RESULTS_AVAILABLE_ACTION) {
+                val updated = intent.getBooleanExtra(WifiManager.EXTRA_RESULTS_UPDATED, false)
+                unregisterWifiScanReceiver()
+                showWifiScanResults(updated)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -132,6 +150,7 @@ class MainActivity : Activity() {
         root.addView(guidesButton)
         root.addView(sourcesButton)
         root.addView(networkLabButton)
+        root.addView(wifiSurveyButton)
         root.addView(runButton)
         root.addView(adminButton)
         root.addView(copyButton)
@@ -417,6 +436,154 @@ class MainActivity : Activity() {
         }
     }
 
+    private fun startWifiSurvey() {
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), wifiScanPermissionRequest)
+            return
+        }
+        val location = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        val locationEnabled = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            location.isLocationEnabled
+        } else {
+            location.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                location.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        }
+        if (!locationEnabled) {
+            AlertDialog.Builder(this)
+                .setTitle("يلزم تفعيل الموقع")
+                .setMessage("يتطلب Android إذن الموقع وخدمات الموقع لعرض نتائج مسح نقاط Wi-Fi القريبة. لا يجمع NOVA موقعك الجغرافي ولا يرسله إلى خادم.")
+                .setPositiveButton("إعدادات الموقع") { _, _ ->
+                    startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
+                .setNegativeButton("إلغاء", null)
+                .show()
+            return
+        }
+        val wifi = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        if (!wifi.isWifiEnabled) {
+            Toast.makeText(this, "فعّل Wi-Fi أولاً ثم أعد التحليل", Toast.LENGTH_LONG).show()
+            return
+        }
+        try {
+            val filter = IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)
+            if (Build.VERSION.SDK_INT >= 33) {
+                registerReceiver(wifiScanReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                @Suppress("DEPRECATION")
+                registerReceiver(wifiScanReceiver, filter)
+            }
+            wifiScanReceiverRegistered = true
+            @Suppress("DEPRECATION")
+            val started = wifi.startScan()
+            if (started) {
+                Toast.makeText(this, "جارٍ مسح الشبكات القريبة… قد يقيّد Android تكرار المسح", Toast.LENGTH_LONG).show()
+            } else {
+                unregisterWifiScanReceiver()
+                showWifiScanResults(false)
+            }
+        } catch (e: SecurityException) {
+            unregisterWifiScanReceiver()
+            Toast.makeText(this, "رفض Android صلاحية مسح Wi-Fi: \${e.message}", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            unregisterWifiScanReceiver()
+            Toast.makeText(this, "تعذر بدء مسح Wi-Fi: \${e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun unregisterWifiScanReceiver() {
+        if (wifiScanReceiverRegistered) {
+            try { unregisterReceiver(wifiScanReceiver) } catch (_: Exception) { }
+            wifiScanReceiverRegistered = false
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == wifiScanPermissionRequest) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startWifiSurvey()
+            } else {
+                Toast.makeText(this, "لم تمنح صلاحية الموقع؛ لا يمكن لـ Android إظهار مسح الشبكات القريبة", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun showWifiScanResults(freshScan: Boolean) {
+        try {
+            val wifi = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+            val results = wifi.scanResults.orEmpty().sortedByDescending { it.level }
+            if (results.isEmpty()) {
+                AlertDialog.Builder(this)
+                    .setTitle("تحليل Wi-Fi")
+                    .setMessage("لم يعرض Android أي نقاط وصول. تحقق من تفعيل Wi-Fi والموقع، ثم حاول لاحقاً. قد تحد قيود النظام أو الشركة المصنّعة من النتائج.")
+                    .setPositiveButton("حسناً", null)
+                    .show()
+                return
+            }
+
+            val nowMicros = SystemClock.elapsedRealtimeNanos() / 1000L
+            val lines = mutableListOf<String>()
+            lines += "عدد نقاط الوصول المرئية: \${results.size}"
+            lines += if (freshScan) "حالة البيانات: نتيجة مسح حديث أبلغ عنها Android" else "حالة البيانات: قد تكون نتائج مخزنة مؤقتاً بسبب قيود المسح"
+            lines += ""
+            val observations = mutableListOf<WifiObservation>()
+            results.forEachIndexed { index, ap ->
+                val mapped = WifiChannelAnalyzer.channelForFrequencyMhz(ap.frequency)
+                if (mapped?.first == "2.4 GHz") observations += WifiObservation(mapped.second, ap.level)
+                val name = ap.SSID?.takeIf { it.isNotBlank() } ?: "شبكة مخفية"
+                val channel = mapped?.second?.toString() ?: "غير معروف"
+                val band = mapped?.first ?: "تردد غير معروف"
+                val security = when {
+                    ap.capabilities.contains("SAE", true) -> "WPA3"
+                    ap.capabilities.contains("WPA2", true) -> "WPA2"
+                    ap.capabilities.contains("WPA", true) -> "WPA"
+                    ap.capabilities.contains("WEP", true) -> "WEP قديم"
+                    else -> "مفتوحة/غير محددة"
+                }
+                val ageSeconds = ((nowMicros - ap.timestamp).coerceAtLeast(0L) / 1_000_000L)
+                lines += "\${index + 1}. $name"
+                lines += "   \${ap.level} dBm (\${WifiChannelAnalyzer.signalQualityLabel(ap.level)}) | $band | قناة $channel | \${ap.frequency} MHz"
+                lines += "   الحماية: $security | عمر سجل المسح: \${ageSeconds}s"
+            }
+            val ranked = WifiChannelAnalyzer.rank24GhzChannels(observations)
+            if (ranked.isNotEmpty() && observations.isNotEmpty()) {
+                lines += ""
+                lines += "=== تقدير ضغط القنوات 2.4 GHz ==="
+                ranked.forEach { score ->
+                    lines += "القناة \${score.channel}: نقاط قريبة متداخلة تقريباً \${score.visibleAccessPoints} | مؤشر الضغط \${"%.2f".format(Locale.US, score.score)}"
+                }
+                lines += "اقتراح أولي: جرّب القناة \${ranked.first().channel} إذا كان الراوتر يسمح بذلك، ثم قارن الأداء."
+            } else {
+                lines += ""
+                lines += "لم تظهر نقاط وصول 2.4 GHz كافية لتقديم مقارنة للقنوات."
+            }
+            lines += ""
+            lines += "حدود القياس: عدد الشبكات وقوة RSSI لا يقيسان إشغال الهواء (airtime) أو التداخل الطيفي الفعلي. النتيجة تقدير من إعلانات نقاط الوصول التي استطاع الهاتف استقبالها فقط."
+            lines += "قد لا يعرض Android كل الشبكات، وقد تكون النتائج قديمة. يفرض النظام حدوداً على تكرار المسح، وقد تتغير الدقة حسب إصدار Android والشركة المصنّعة."
+            lines += "الخصوصية: لا نعرض BSSID أو عنوان MAC ولا نرسل أسماء الشبكات إلى أي خادم."
+            val textView = TextView(this).apply {
+                text = lines.joinToString("\n")
+                textSize = 14f
+                setTextIsSelectable(true)
+                setPadding(28, 20, 28, 20)
+            }
+            AlertDialog.Builder(this)
+                .setTitle("تقرير ذكاء Wi-Fi")
+                .setView(ScrollView(this).apply { addView(textView) })
+                .setPositiveButton("إغلاق", null)
+                .show()
+        } catch (e: SecurityException) {
+            Toast.makeText(this, "Android منع قراءة نتائج المسح: \${e.message}", Toast.LENGTH_LONG).show()
+        } catch (e: Exception) {
+            Toast.makeText(this, "فشل تحليل نتائج Wi-Fi: \${e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
+        }
+    }
+
     private fun gatewayAddress(): String? {
         return try {
             val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -457,6 +624,7 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        unregisterWifiScanReceiver()
         worker.shutdownNow()
         super.onDestroy()
     }
