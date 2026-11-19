@@ -213,9 +213,9 @@ class MainActivity : Activity() {
                 }
             }
             if (matches.isEmpty()) return false
-            append("\\nنتائج OpenWrt Table of Hardware — ${root.optInt("count")} جهاز في قاعدة المصدر")
+            append("\nنتائج OpenWrt Table of Hardware — ${root.optInt("count")} جهاز في قاعدة المصدر")
             for (item in matches) {
-                append("\\n${item.optString("brand")} ${item.optString("model")} ${item.optString("version")}")
+                append("\n${item.optString("brand")} ${item.optString("model")} ${item.optString("version")}")
                 val fields = listOf("cpu", "ram", "flash", "target", "2.4ghz", "5.0ghz", "device_type", "supported_current_release")
                 for (key in fields) {
                     val value = item.optString(key)
