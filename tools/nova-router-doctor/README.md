@@ -1,27 +1,46 @@
 # NOVA Router Doctor (Android)
 
-A lightweight Android diagnostic app for Wi-Fi and internet connectivity. Designed for the Nokia G-2426G-A but useful with other home routers.
+Android diagnostic app for home Wi-Fi and internet troubleshooting. Generic network checks are useful with Nokia, Huawei, ZTE, TP-Link, D-Link and other routers. Model-specific GPON/ONT details require the exact model and firmware.
 
 ## Current capabilities
-- Detects whether Android is connected over Wi-Fi or cellular.
-- Reads Wi-Fi RSSI, link speed, and frequency when Android permissions and device firmware expose them.
-- Identifies the default gateway and performs best-effort local reachability checks.
-- Resolves two DNS hostnames.
-- Tests HTTPS connectivity and response timing against Google and Cloudflare.
-- Displays and copies a diagnostic report.
+- Detects Wi-Fi versus cellular transport and Android's validated-internet state.
+- Reads Wi-Fi RSSI, link speed and frequency when Android exposes them.
+- Finds the active network's default gateway.
+- Tests local router management ports 80 and 443 (best effort).
+- Tests external TCP connectivity to Cloudflare and Google.
+- Resolves DNS names and tests HTTPS against Google and Cloudflare, recording response time.
+- Gives evidence-based first-line troubleshooting guidance.
+- Opens the router's local admin page in the browser.
+- Copies the diagnostic report.
+- Shows optional advanced Termux commands that run the companion shell diagnostic.
+
+## Termux companion
+The advanced read-only script is at:
+`tools/nokia-router-diagnostic/advanced-check.sh`
+
+Install Termux from F-Droid, then run:
+
+```bash
+pkg update -y
+pkg install -y iproute2 iputils dnsutils curl traceroute
+mkdir -p ~/router-check && cd ~/router-check
+curl -L https://raw.githubusercontent.com/NovaVisualsStudio/nova-play/main/tools/nokia-router-diagnostic/advanced-check.sh -o advanced-check.sh
+chmod +x advanced-check.sh
+bash advanced-check.sh
+```
 
 ## Safety and limitations
-- Read-only: it does not log in to the router or modify Wi-Fi, WAN, GPON, DNS, or firmware settings.
+- No root required.
+- Read-only: it does not log in to the router or modify Wi-Fi, WAN, GPON, DNS, VLAN, or firmware settings.
 - It never asks for or stores router/Wi-Fi passwords.
-- Android may restrict Wi-Fi signal details unless Location permission is granted and Location services are enabled.
-- `InetAddress.isReachable` and gateway port checks are best-effort; routers may block probes or use a different admin port.
-- This first APK is a diagnostic baseline, not an automatic repair tool. Router settings must only be changed after identifying the fault and confirming the exact model/firmware behavior.
+- Android and some router firmwares may restrict signal details or block diagnostic ports.
+- Failed TCP/ICMP probes are not conclusive proof of a router fault.
+- The app provides safe guided actions, not blind automatic configuration changes. Router admin settings must only be changed after confirming the exact model, firmware, ISP configuration and diagnosis.
+- Generic network tests work across brands; GPON optical levels, WAN authentication and model-specific repairs need manufacturer/ISP-specific information.
 
 ## Build APK
-A GitHub Actions workflow builds a debug APK on every relevant push and can also be started manually:
-- Repository → Actions → **Build NOVA Router Doctor APK** → Run workflow.
-- Download the `nova-router-doctor-debug-apk` artifact from the completed run.
-- Install the APK on Android. Debug APK is for testing, not a signed production release.
+GitHub Actions workflow: **Build NOVA Router Doctor APK**.
+Open Repository → Actions → choose the workflow → Run workflow, or wait for the build triggered by a source update. Download the `nova-router-doctor-debug-apk` artifact from a successful run. The APK is a debug build for testing, not a production-signed release.
 
 ## Source
-Open this directory in Android Studio as a Gradle project, or build with Gradle 8.7 and JDK 17 using Android SDK platform 35.
+Open this directory in Android Studio as a Gradle project. Build with Gradle 8.7, JDK 17 and Android SDK platform 35.
