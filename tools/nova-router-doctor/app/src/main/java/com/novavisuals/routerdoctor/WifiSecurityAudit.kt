@@ -20,11 +20,11 @@ object WifiSecurityAudit {
         val hasPsk = "PSK" in raw
         val hasEap = "EAP" in raw
         val hasOwe = "OWE" in raw
-        val hasWpa3 = hasSae || hasOwe
-        val hasWpa2 = "WPA2" in raw || hasPsk || hasEap
+        val hasWpa3 = hasSae || hasOwe || "WPA3" in raw || "SUITE_B_192" in raw
+        val hasWpa2 = "WPA2" in raw || hasPsk
         val hasWpa1 = Regex("WPA(?!2|3)").containsMatchIn(raw)
         val hasWep = "WEP" in raw
-        val hasAnySecurity = hasWpa3 || hasWpa2 || hasWpa1 || hasWep
+        val hasAnySecurity = hasWpa3 || hasWpa2 || hasWpa1 || hasWep || hasEap
         val isOpen = !hasAnySecurity
         val pmfRequired = "MFPR" in raw
         val pmfCapable = "MFPC" in raw || pmfRequired
@@ -32,10 +32,13 @@ object WifiSecurityAudit {
 
         val protocol = when {
             hasSae && hasPsk -> "WPA2/WPA3-Personal (انتقالي)"
-            hasSae && hasEap -> "WPA3 أو SAE مع EAP (تحقق من تفاصيل AP)"
+            hasSae && hasPsk -> "WPA2/WPA3-Personal (انتقالي)"
+            hasSae && hasEap -> "WPA3-Personal/Enterprise (تحقق من تفاصيل AP)"
             hasSae -> "WPA3-Personal (SAE)"
+            hasWpa3 && hasEap -> "WPA3-Enterprise (EAP)"
             hasOwe -> "Enhanced Open (OWE)"
             hasEap && hasWpa2 -> "WPA2-Enterprise (EAP)"
+            hasEap && hasWpa1 -> "WPA-Enterprise (قديم)"
             hasPsk && hasWpa2 -> "WPA2-Personal (PSK)"
             hasWpa1 -> "WPA قديم"
             hasWep -> "WEP قديم جداً"
@@ -59,6 +62,7 @@ object WifiSecurityAudit {
                 findings += "لا يظهر تشفير Wi-Fi تقليدي في بيانات المسح."
             }
             hasSae -> findings += "تم رصد SAE المرتبط بـ WPA3."
+            hasWpa3 && hasEap -> findings += "تم رصد مؤشرات WPA3-Enterprise؛ لم يتم اختبار المصادقة."
             hasWpa2 -> findings += "تم رصد مؤشرات WPA2؛ لا تكشف هذه البيانات كلمة المرور."
         }
         val pmf = when {
