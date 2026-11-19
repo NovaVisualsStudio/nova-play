@@ -80,3 +80,9 @@ Open Repository → Actions → choose the workflow → Run workflow, or wait fo
 
 ## Android build requirements
 Gradle 8.7, JDK 17 and Android SDK platform 35.
+
+
+### Wireless Security Intelligence (passive)
+- Nearby Wi-Fi scan classifies advertised capabilities as Open, WEP, WPA, WPA2-Personal, WPA2-Enterprise, WPA3-Personal, Enhanced Open (OWE), or WPA2/WPA3 transition where Android exposes the relevant tokens.
+- Adds a transparent heuristic risk score and findings for legacy protocols, PMF advertisement (MFPC/MFPR), and a tentative WPS capability indicator. These are scan-metadata observations, not proof of exploitability or password recovery.
+- No handshake capture, password guessing, WPS PIN attempts, credential extraction, connection attempts, or remote upload is performed. Android may omit capability details; unknown values remain unknown.
