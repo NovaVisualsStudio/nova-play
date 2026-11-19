@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "updated": "2026-11-19",
+  "data_policy": "Curated factual fields only. Every device record includes its source. OpenWrt Table of Hardware is linked as a live external catalogue; its full dataset is not copied into this app.",
+  "devices": [
+    {
+      "manufacturer": "Nokia",
+      "model": "G-2426G-A",
+      "aliases": ["7368 ISAM ONT G-2426G-A", "G2426GA"],
+      "device_type": "GPON ONT / Wi-Fi gateway",
+      "verified_specs": {
+        "ethernet": "4 x 10/100/1000Base-T RJ45",
+        "wifi": "2.4 GHz and 5 GHz; official product guide describes 802.11ac/b/g/n",
+        "pon": "GPON",
+        "vlan": "IEEE 802.1Q support"
+      },
+      "caveats": [
+        "ISP-customized firmware and enabled features can vary by operator and software release.",
+        "Do not flash generic firmware or alter GPON serial, LOID, VLAN, WAN authentication, or OMCI settings.",
+        "The Nokia product guide is proprietary; this app stores a short factual summary and links to the source, not the document contents."
+      ],
+      "support_url": "https://onestore.nokia.com/asset/f/207658/",
+      "product_guide_url": "https://assets-us-01.kc-usercontent.com/b33dc2a4-d1b6-0080-5fc3-5fd76f8f7dab/8cab7445-2d3a-4aa4-a03b-d8e812114300/G-2426G-A.pdf",
+      "source_checked": "2026-11-19"
+    }
+  ],
+  "catalogues": [
+    {
+      "name": "OpenWrt Table of Hardware",
+      "url": "https://toh.openwrt.org/",
+      "data_url": "https://openwrt.org/toh.json",
+      "coverage_note": "Thousands of devices, hardware capabilities and OpenWrt support status. Not a universal list of ISP-locked GPON ONTs.",
+      "license_note": "OpenWrt wiki hardware data is generally CC BY-SA 4.0; confirm current upstream terms and preserve attribution/share-alike obligations before redistributing extracted data."
+    },
+    {
+      "name": "OpenWrt hardware data repository",
+      "url": "https://github.com/openwrt/toh-openwrt-org",
+      "license_note": "Repository code is GPL-2.0. Do not assume the code license automatically covers all underlying wiki data."
+    },
+    {
+      "name": "OpenDeviceDB",
+      "url": "https://github.com/opendevicedb/opendevicedb",
+      "coverage_note": "Directory aggregating open-firmware and open-protocol device projects; useful for discovering project support, not a general router repair database.",
+      "license_note": "Check LICENSE-DATA.md and each upstream source before copying records."
+    }
+  ],
+  "manufacturer_support": [
+    {"name":"Nokia","url":"https://onestore.nokia.com/"},
+    {"name":"TP-Link","url":"https://www.tp-link.com/support/"},
+    {"name":"Huawei","url":"https://consumer.huawei.com/en/support/"},
+    {"name":"ZTE","url":"https://www.zte.com.cn/global/support/"},
+    {"name":"D-Link","url":"https://support.dlink.com/"},
+    {"name":"ASUS","url":"https://www.asus.com/support/"},
+    {"name":"NETGEAR","url":"https://www.netgear.com/support/"},
+    {"name":"MikroTik","url":"https://help.mikrotik.com/docs/"},
+    {"name":"Ubiquiti","url":"https://help.ui.com/"}
+  ]
+}
