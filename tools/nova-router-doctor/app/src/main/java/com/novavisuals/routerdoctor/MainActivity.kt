@@ -1,20 +1,23 @@
 package com.novavisuals.routerdoctor
 
-import android.Manifest
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
-import android.content.pm.PackageManager
+import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
 import android.net.wifi.WifiManager
-import android.os.Build
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -30,19 +33,21 @@ class MainActivity : Activity() {
     private lateinit var runButton: Button
     private val worker = Executors.newSingleThreadExecutor()
     private val report = StringBuilder()
+    @Volatile private var gateway: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         buildUi()
-        append("جاهز للفحص. اتصل بشبكة Wi-Fi المراد تشخيصها ثم اضغط بدء الفحص.")
-        append("التطبيق لا يغيّر إعدادات الراوتر ولا يطلب كلمة المرور.")
+        append("جاهز. اتصل بشبكة Wi-Fi التي تريد فحصها ثم ابدأ التشخيص.")
+        append("يدعم الفحص العام راوترات Nokia وHuawei وZTE وTP-Link وD-Link وغيرها.")
+        append("لا يطلب التطبيق كلمات المرور ولا يغيّر إعدادات الراوتر تلقائياً.")
     }
 
     private fun buildUi() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(28, 32, 28, 24)
-            setBackgroundColor(0xFFF4F7FB.toInt())
+            setPadding(24, 28, 24, 20)
+            setBackgroundColor(0xFFF3F6FA.toInt())
         }
         val title = TextView(this).apply {
             text = "NOVA Router Doctor"
@@ -51,21 +56,38 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
         }
         val subtitle = TextView(this).apply {
-            text = "فحص Wi-Fi والراوتر والإنترنت"
-            textSize = 16f
+            text = "تشخيص Wi-Fi والراوتر والإنترنت وإرشادات الإصلاح"
+            textSize = 14f
             gravity = Gravity.CENTER
-            setPadding(0, 10, 0, 20)
+            setTextColor(0xFF486581.toInt())
+            setPadding(0, 8, 0, 14)
         }
         runButton = Button(this).apply {
-            text = "بدء الفحص الشامل"
+            text = "ابدأ الفحص الشامل"
             setOnClickListener { startDiagnostics() }
         }
+        val adminButton = Button(this).apply {
+            text = "فتح صفحة الراوتر"
+            setOnClickListener { openRouterAdmin() }
+        }
         val copyButton = Button(this).apply {
-            text = "نسخ التقرير"
+            text = "نسخ تقرير الفحص"
             setOnClickListener {
-                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("NOVA Router Doctor report", report.toString()))
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                clipboard.setPrimaryClip(ClipData.newPlainText("NOVA Router Doctor", report.toString()))
                 Toast.makeText(this@MainActivity, "تم نسخ التقرير", Toast.LENGTH_SHORT).show()
+            }
+        }
+        val termuxButton = Button(this).apply {
+            text = "عرض أوامر Termux المتقدمة"
+            setOnClickListener {
+                append("\n\n=== أوامر Termux ===")
+                append("pkg update -y")
+                append("pkg install -y iproute2 iputils dnsutils curl traceroute")
+                append("mkdir -p ~/router-check && cd ~/router-check")
+                append("curl -L https://raw.githubusercontent.com/NovaVisualsStudio/nova-play/main/tools/nokia-router-diagnostic/advanced-check.sh -o advanced-check.sh")
+                append("chmod +x advanced-check.sh && bash advanced-check.sh")
+                append("التقرير سيُحفظ داخل ~/router-check/")
             }
         }
         output = TextView(this).apply {
@@ -73,14 +95,19 @@ class MainActivity : Activity() {
             setTextColor(0xFF243B53.toInt())
             movementMethod = ScrollingMovementMethod()
             setTextIsSelectable(true)
-            setPadding(14, 14, 14, 14)
+            setPadding(16, 16, 16, 16)
             setBackgroundColor(0xFFFFFFFF.toInt())
         }
         root.addView(title)
         root.addView(subtitle)
         root.addView(runButton)
+        root.addView(adminButton)
         root.addView(copyButton)
-        root.addView(output, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = 14 })
+        root.addView(termuxButton)
+        root.addView(ScrollView(this).apply {
+            addView(output)
+            layoutParams = LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = 12 }
+        })
         setContentView(root)
     }
 
@@ -88,6 +115,20 @@ class MainActivity : Activity() {
         runOnUiThread {
             report.append(line).append("\n")
             output.text = report.toString()
+        }
+    }
+
+    private fun openRouterAdmin() {
+        val address = gateway ?: gatewayAddress()
+        if (address.isNullOrBlank()) {
+            Toast.makeText(this, "تعذر تحديد عنوان الراوتر. اتصل بشبكة Wi-Fi أولاً.", Toast.LENGTH_LONG).show()
+            return
+        }
+        gateway = address
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("http://$address")))
+        } catch (_: Exception) {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://$address")))
         }
     }
 
@@ -99,112 +140,138 @@ class MainActivity : Activity() {
         append("التاريخ: " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
         worker.execute {
             try {
-                checkWifi()
-                checkGateway()
-                checkDns()
-                checkHttps("https://www.google.com")
-                checkHttps("https://www.cloudflare.com")
-                append("\n=== خلاصة أولية ===")
-                append("إذا كان اتصال البوابة المحلية ضعيفاً فافحص قرب الهاتف والتداخل اللاسلكي.")
-                append("إذا نجح DNS وفشل HTTPS فقد توجد مشكلة اتصال أو TLS أو بوابة دخول.")
-                append("إذا فشل DNS بينما يعمل الوصول إلى الإنترنت فقد تكون المشكلة من DNS.")
-                append("هذه مؤشرات وليست حكماً نهائياً؛ قد تحجب بعض الشبكات اختبارات معينة.")
-                append("\nلم يتم تغيير أي إعداد.")
+                val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                val network = cm.activeNetwork
+                val caps = if (network != null) cm.getNetworkCapabilities(network) else null
+                val wifi = caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+                append("\n1) حالة الاتصال")
+                append("Wi-Fi: " + if (wifi) "متصل" else "غير متصل أو الاتصال عبر بيانات الهاتف")
+                append("الاتصال بالإنترنت بحسب Android: " + if (caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true) "متحقق" else "غير مؤكد")
+                gateway = gatewayAddress()
+                append("بوابة الراوتر: " + (gateway ?: "غير متاحة"))
+
+                var rssi = -127
+                var link = -1
+                var frequency = -1
+                try {
+                    @Suppress("DEPRECATION")
+                    val info = (applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager).connectionInfo
+                    rssi = info.rssi
+                    link = info.linkSpeed
+                    frequency = info.frequency
+                    append("قوة Wi-Fi: $rssi dBm")
+                    append("سرعة الربط النظرية: $link Mbps")
+                    append("تردد Wi-Fi: $frequency MHz")
+                } catch (e: Exception) {
+                    append("معلومات الإشارة غير متاحة على إصدار Android هذا: ${e.message}")
+                }
+
+                append("\n2) الوصول إلى الراوتر")
+                val gw = gateway
+                val gw80 = gw != null && testTcp(gw, 80, 1800)
+                val gw443 = gw != null && testTcp(gw, 443, 1800)
+                append("منفذ الإدارة HTTP/80: " + if (gw80) "يستجيب" else "لا يستجيب أو مغلق")
+                append("منفذ الإدارة HTTPS/443: " + if (gw443) "يستجيب" else "لا يستجيب أو مغلق")
+                append("تنبيه: إغلاق المنفذين لا يثبت تعطل الراوتر؛ قد يستخدم منفذاً آخر أو يمنع الاختبار.")
+
+                append("\n3) اختبار الإنترنت عبر IP")
+                val cloud = testTcp("1.1.1.1", 443, 3000)
+                val google = testTcp("8.8.8.8", 443, 3000)
+                append("Cloudflare 1.1.1.1:443: " + if (cloud) "ناجح" else "فاشل")
+                append("Google 8.8.8.8:443: " + if (google) "ناجح" else "فاشل")
+
+                append("\n4) اختبار DNS")
+                val dnsGoogle = dnsTest("google.com")
+                val dnsCloudflare = dnsTest("cloudflare.com")
+                append("google.com: " + if (dnsGoogle) "ناجح" else "فاشل")
+                append("cloudflare.com: " + if (dnsCloudflare) "ناجح" else "فاشل")
+
+                append("\n5) اختبار HTTPS وزمن الاستجابة")
+                val httpsGoogle = httpsTest("https://www.google.com")
+                val httpsCloudflare = httpsTest("https://www.cloudflare.com")
+                append("Google HTTPS: " + httpsGoogle)
+                append("Cloudflare HTTPS: " + httpsCloudflare)
+
+                append("\n6) النتيجة والإصلاح المقترح")
+                when {
+                    !wifi -> {
+                        append("التشخيص: الهاتف ليس متصلاً عبر Wi-Fi.")
+                        append("الإجراء: اتصل بشبكة الراوتر الصحيحة ثم أعد الفحص.")
+                    }
+                    gw == null -> {
+                        append("التشخيص: لم يتمكن Android من تحديد البوابة المحلية.")
+                        append("الإجراء: أوقف VPN مؤقتاً إن كان يعمل، أعد الاتصال بالـ Wi-Fi، ثم أعد الفحص.")
+                    }
+                    !gw80 && !gw443 -> {
+                        append("التشخيص: لم تؤكد اختبارات منافذ الإدارة الوصول إلى واجهة الراوتر.")
+                        append("الإجراء: اقترب من الراوتر، أعد تشغيل Wi-Fi في الهاتف، ثم تحقق من عنوان البوابة. قد تكون واجهة الإدارة على منفذ مختلف.")
+                    }
+                    !cloud && !google -> {
+                        append("التشخيص: الاتصال المحلي ظاهر لكن الاتصال الخارجي فشل.")
+                        append("الإجراء: افحص لمبات Internet/WAN وPON/LOS، ثم أعد تشغيل الراوتر مرة واحدة بالطريقة المعتادة. إذا استمر العطل تواصل مع المزود.")
+                        append("لا تغيّر إعدادات GPON أو VLAN أو WAN؛ قد يؤدي ذلك إلى قطع الخدمة.")
+                    }
+                    !dnsGoogle && !dnsCloudflare -> {
+                        append("التشخيص: فشل حل أسماء النطاقات مع احتمال وجود اتصال IP.")
+                        append("الإجراء الآمن: اختبر DNS خاصاً موثوقاً على الهاتف فقط، ثم أعد الفحص. لا تغيّر DNS الراوتر قبل التأكد.")
+                    }
+                    httpsGoogle.startsWith("فشل") && httpsCloudflare.startsWith("فشل") -> {
+                        append("التشخيص: DNS قد يعمل لكن HTTPS فشل.")
+                        append("الإجراء: تحقق من التاريخ والوقت، أوقف VPN/Proxy مؤقتاً، وافحص وجود صفحة تسجيل دخول للشبكة.")
+                    }
+                    rssi != -127 && rssi < -75 -> {
+                        append("التشخيص: إشارة Wi-Fi ضعيفة.")
+                        append("الإجراء: اقترب من الراوتر، ارفع مكانه، أبعده عن الأجهزة المعدنية ومصادر التداخل، ثم أعد الفحص.")
+                    }
+                    else -> {
+                        append("التشخيص: الاختبارات الأساسية ناجحة.")
+                        append("إذا استمر البطء، قارن السرعة قرب الراوتر وبعيداً عنه، وجرّب تقليل ازدحام الأجهزة والقناة اللاسلكية.")
+                    }
+                }
+                append("\nالنطاق: الفحوصات العامة تعمل مع مختلف العلامات التجارية. فحوص GPON/ONT وطرق الإصلاح الدقيقة تتطلب موديل الراوتر وإصدار البرنامج الثابت.")
+                append("السلامة: لم يتم تسجيل الدخول إلى الراوتر ولم يتم تغيير أي إعداد.")
             } catch (e: Exception) {
-                append("تعذر إكمال بعض الاختبارات: ${e.message ?: "خطأ غير معروف"}")
+                append("تعذر إكمال بعض الاختبارات: ${e.javaClass.simpleName}: ${e.message}")
             } finally {
                 runOnUiThread { runButton.isEnabled = true }
             }
         }
     }
 
-    @Suppress("DEPRECATION")
-    private fun checkWifi() {
-        append("\n=== حالة Wi-Fi ===")
-        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = cm.activeNetwork
-        val caps = if (network != null) cm.getNetworkCapabilities(network) else null
-        append("نوع الاتصال: " + when {
-            caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true -> "Wi-Fi"
-            caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> "بيانات الهاتف"
-            else -> "غير معروف أو لا يوجد اتصال"
-        })
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            append("لإظهار قوة الإشارة قد تحتاج إلى منح إذن الموقع وتفعيل خدمة الموقع في Android.")
-            return
-        }
-        try {
-            val wifi = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            val info = wifi.connectionInfo
-            append("قوة الإشارة RSSI: ${info.rssi} dBm (تقريبية؛ -50 ممتازة، -67 جيدة، -75 ضعيفة)")
-            append("سرعة الربط المعلنة: ${info.linkSpeed} Mbps")
-            append("التردد: ${info.frequency} MHz")
-            append("ملاحظة: بعض إصدارات Android تخفي هذه المعلومات أو تعرض قيماً غير متاحة.")
-        } catch (e: Exception) {
-            append("تعذر قراءة معلومات Wi-Fi: ${e.message}")
-        }
-    }
-
     private fun gatewayAddress(): String? {
         return try {
             val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val props = cm.getLinkProperties(cm.activeNetwork) ?: return null
+            val active = cm.activeNetwork ?: return null
+            val props = cm.getLinkProperties(active) ?: return null
             props.routes.firstOrNull { it.isDefaultRoute }?.gateway?.hostAddress
         } catch (_: Exception) { null }
     }
 
-    private fun checkGateway() {
-        append("\n=== اختبار الراوتر المحلي ===")
-        val gateway = gatewayAddress()
-        if (gateway == null) {
-            append("لم يتمكن Android من تحديد البوابة الافتراضية.")
-            return
-        }
-        append("عنوان البوابة: $gateway")
-        try {
-            val start = System.currentTimeMillis()
-            Socket().use { it.connect(InetSocketAddress(gateway, 80), 1800) }
-            append("منفذ HTTP للراوتر 80: متاح خلال ${System.currentTimeMillis() - start} ms")
-        } catch (_: Exception) {
-            append("منفذ 80 لا يستجيب أو مغلق؛ هذا لا يعني أن الراوتر معطل (قد يستخدم HTTPS أو يمنع الاتصال).")
-        }
-        try {
-            val start = System.currentTimeMillis()
-            val ok = InetAddress.getByName(gateway).isReachable(1800)
-            append("اختبار الوصول للبوابة: ${if (ok) "استجابة" else "لا توجد استجابة مؤكدة"}، ${System.currentTimeMillis() - start} ms")
-        } catch (e: Exception) {
-            append("تعذر اختبار البوابة: ${e.message}")
-        }
+    private fun testTcp(host: String, port: Int, timeout: Int): Boolean {
+        return try {
+            Socket().use { it.connect(InetSocketAddress(host, port), timeout) }
+            true
+        } catch (_: Exception) { false }
     }
 
-    private fun checkDns() {
-        append("\n=== اختبار DNS ===")
-        listOf("google.com", "cloudflare.com").forEach { host ->
-            try {
-                val start = System.currentTimeMillis()
-                val address = InetAddress.getByName(host)
-                append("$host → ${address.hostAddress} — ${System.currentTimeMillis() - start} ms")
-            } catch (e: Exception) {
-                append("$host: فشل حل الاسم — ${e.message}")
-            }
-        }
+    private fun dnsTest(host: String): Boolean {
+        return try { InetAddress.getAllByName(host).isNotEmpty() } catch (_: Exception) { false }
     }
 
-    private fun checkHttps(address: String) {
-        append("\n=== HTTPS: $address ===")
+    private fun httpsTest(address: String): String {
         var connection: HttpsURLConnection? = null
-        try {
-            val start = System.currentTimeMillis()
+        val start = System.currentTimeMillis()
+        return try {
             connection = (URL(address).openConnection() as HttpsURLConnection).apply {
-                connectTimeout = 7000
-                readTimeout = 7000
+                connectTimeout = 6000
+                readTimeout = 6000
                 requestMethod = "HEAD"
                 instanceFollowRedirects = true
             }
             val code = connection.responseCode
-            append("استجابة HTTP: $code — الزمن الكلي ${System.currentTimeMillis() - start} ms")
+            "ناجح — HTTP $code، ${System.currentTimeMillis() - start} ms"
         } catch (e: Exception) {
-            append("فشل HTTPS: ${e.javaClass.simpleName}: ${e.message}")
+            "فشل — ${e.javaClass.simpleName}: ${e.message}"
         } finally {
             connection?.disconnect()
         }
