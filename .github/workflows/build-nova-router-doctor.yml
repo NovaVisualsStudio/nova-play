@@ -1,8 +1,11 @@
 name: Build NOVA Router Doctor APK
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '17 4 * * 1'
   push:
     paths:
+      - 'tools/nova-router-doctor/**'
       - 'tools/nova-router-doctor/**'
       - '.github/workflows/build-nova-router-doctor.yml'
 permissions:
@@ -24,6 +27,8 @@ jobs:
           packages: 'platform-tools'
       - name: Install Android SDK
         run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Download and package OpenWrt hardware database
+        run: python3 tools/nova-router-doctor/sync_openwrt_db.py
       - name: Build debug APK
         working-directory: tools/nova-router-doctor
         run: gradle --no-daemon assembleDebug
