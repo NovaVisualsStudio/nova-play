@@ -8,6 +8,13 @@ import kotlin.math.sqrt
  * Latency jitter here is the mean absolute delta between adjacent samples;
  * it is deliberately not presented as RFC 3550 RTP inter-arrival jitter.
  */
+data class LoadedLatencyAssessment(
+    val baselineP95Ms: Double,
+    val loadedP95Ms: Double,
+    val increaseMs: Double,
+    val label: String
+)
+
 data class SampleStatistics(
     val count: Int,
     val failedCount: Int,
@@ -58,6 +65,24 @@ object NetworkMetrics {
             standardDeviation = sqrt(variance),
             meanAbsoluteDelta = if (deltas.isEmpty()) 0.0 else deltas.average()
         )
+    }
+
+    /**
+     * Heuristic classification of the added P95 latency under load.
+     * It is not a standards certification; callers must disclose the probe type.
+     */
+    fun assessLoadedLatency(baselineP95Ms: Double, loadedP95Ms: Double): LoadedLatencyAssessment {
+        require(baselineP95Ms.isFinite() && baselineP95Ms >= 0.0)
+        require(loadedP95Ms.isFinite() && loadedP95Ms >= 0.0)
+        val increase = (loadedP95Ms - baselineP95Ms).coerceAtLeast(0.0)
+        val label = when {
+            increase <= 5.0 -> "ممتاز — زيادة طفيفة"
+            increase <= 15.0 -> "جيد — ازدحام محدود"
+            increase <= 30.0 -> "متوسط — قد يظهر تأخير ملحوظ"
+            increase <= 60.0 -> "مرتفع — تأخير واضح تحت الحمل"
+            else -> "شديد — ارتفاع كبير في زمن الاستجابة"
+        }
+        return LoadedLatencyAssessment(baselineP95Ms, loadedP95Ms, increase, label)
     }
 
     fun throughputMbps(bytes: Long, elapsedSeconds: Double): Double {
