@@ -6,7 +6,6 @@ on:
   push:
     paths:
       - 'tools/nova-router-doctor/**'
-      - 'tools/nova-router-doctor/**'
       - '.github/workflows/build-nova-router-doctor.yml'
 permissions:
   contents: read
