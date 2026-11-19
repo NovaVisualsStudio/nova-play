@@ -542,17 +542,15 @@ class MainActivity : Activity() {
                 val name = ap.SSID?.takeIf { it.isNotBlank() } ?: "شبكة مخفية"
                 val channel = mapped?.second?.toString() ?: "غير معروف"
                 val band = mapped?.first ?: "تردد غير معروف"
-                val security = when {
-                    ap.capabilities.contains("SAE", true) -> "WPA3"
-                    ap.capabilities.contains("WPA2", true) -> "WPA2"
-                    ap.capabilities.contains("WPA", true) -> "WPA"
-                    ap.capabilities.contains("WEP", true) -> "WEP قديم"
-                    else -> "مفتوحة/غير محددة"
-                }
+                val securityAudit = WifiSecurityAudit.analyze(ap.capabilities)
+                val security = securityAudit.protocolLabel
                 val ageSeconds = ((nowMicros - ap.timestamp).coerceAtLeast(0L) / 1_000_000L)
                 lines += "${index + 1}. $name"
                 lines += "   ${ap.level} dBm (${WifiChannelAnalyzer.signalQualityLabel(ap.level)}) | $band | قناة $channel | ${ap.frequency} MHz"
                 lines += "   الحماية: $security | عمر سجل المسح: ${ageSeconds}s"
+                lines += "   التقييم الأمني الأولي: ${securityAudit.riskLabel} — ${securityAudit.riskScore}/100"
+                lines += "   PMF: ${securityAudit.pmfLabel} | WPS: ${securityAudit.wpsLabel}"
+                securityAudit.findings.forEach { lines += "   • $it" }
             }
             val ranked = WifiChannelAnalyzer.rank24GhzChannels(observations)
             if (ranked.isNotEmpty() && observations.isNotEmpty()) {
