@@ -130,7 +130,6 @@ class MainActivity : Activity() {
             else -> "غير معروف أو لا يوجد اتصال"
         })
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 41)
             append("لإظهار قوة الإشارة قد تحتاج إلى منح إذن الموقع وتفعيل خدمة الموقع في Android.")
             return
         }
