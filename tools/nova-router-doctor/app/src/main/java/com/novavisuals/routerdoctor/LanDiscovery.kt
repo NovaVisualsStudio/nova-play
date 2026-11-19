@@ -51,7 +51,7 @@ object LanDiscoveryCore {
         if (isGateway) return "الراوتر / البوابة الافتراضية"
         return when {
             9100 in openPorts || 631 in openPorts -> "طابعة أو خدمة طباعة محتملة"
-            554 in openPorts -> "كاميرا أو جهاز بث فيديو محتمل"
+            554 in openPorts -> "كاميرا أو جهاز بث فيديو محتملة"
             445 in openPorts -> "مشاركة ملفات أو NAS أو Windows محتمل"
             22 in openPorts -> "جهاز شبكة أو Linux بخدمة SSH محتملة"
             80 in openPorts || 443 in openPorts || 8080 in openPorts ->
@@ -118,6 +118,7 @@ object LanDiscovery {
             } ?: return "لم يتم العثور على IPv4 خاص بنطاق /24 إلى /30. لم يبدأ أي مسح."
 
             val localIp = (link.address as Inet4Address).hostAddress
+                ?: return "تعذر قراءة عنوان IPv4 المحلي."
             val cidr = LanDiscoveryCore.networkCidr(localIp, link.prefixLength)
             val targets = LanDiscoveryCore.targetHosts(localIp, link.prefixLength)
             val gatewayIp = properties.routes.firstOrNull { it.isDefaultRoute }
