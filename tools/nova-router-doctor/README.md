@@ -22,9 +22,10 @@ Android Wi-Fi and internet diagnostics with an offline router-model registry and
 
 ## Network lab (Wi-Fi inspection and internet speed)
 - A separate in-app network lab reads Android's active-network state, validated-internet capability, local IP, default gateway, DNS servers, interface name, Wi-Fi RSSI, negotiated link rate and radio frequency where Android exposes them.
-- The lab provides an on-demand Cloudflare-based HTTP download/upload throughput test (8 MB download + 2 MB upload) and five HTTPS response samples. It reports average HTTPS response time, response-time variation and failed samples; these are not ICMP ping or true packet-loss measurements.
+- The lab provides an on-demand Cloudflare-based HTTP download/upload throughput test (8 MB download + 2 MB upload) and nine HTTPS response samples. It reports mean, median, P95, standard deviation, mean absolute change between adjacent samples, and failed-sample ratio. These are HTTP(S) transaction timings, not ICMP ping, UDP jitter, or packet-loss measurements.
 - The speed test is user-initiated, runs over HTTPS and does not need router credentials. It can consume around 10 MB per run. Results depend on the external test endpoint, route, congestion, Wi-Fi signal, device and server load; repeat tests and compare near the router versus farther away.
 - Wi-Fi link speed is a negotiated radio link rate, not measured internet throughput. RSSI is a signal-strength indicator, not a distance or speed measurement.
+- A deterministic `NetworkMetrics` core computes percentiles, spread, adjacent-sample variation, failed-sample ratio, and decimal Mbps. JVM unit tests cover the metric math and invalid inputs; CI runs these tests before packaging the APK.
 - Nearby access-point/channel scanning and background monitoring are not claimed by this version. Android scan throttling and permission/OEM restrictions must be handled explicitly before adding those features.
 
 ### Open-source engineering references reviewed
