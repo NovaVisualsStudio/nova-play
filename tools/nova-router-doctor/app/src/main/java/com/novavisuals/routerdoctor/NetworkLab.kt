@@ -257,7 +257,7 @@ object NetworkLab {
                     }
                 }
             } else {
-                conn.inputStream.use { it.copyTo(java.io.OutputStream.nullOutputStream()) }
+                conn.inputStream.use { stream ->\n                    val discard = ByteArray(1024)\n                    while (stream.read(discard) >= 0) { /* consume small response */ }\n                }
             }
             val seconds = (System.nanoTime() - start) / 1_000_000_000.0
             if (seconds <= 0.0 || bytes <= 0L) throw IllegalStateException("لم تصل بيانات قابلة للقياس")
